@@ -6,7 +6,26 @@
 #include <sys/types.h>
 #define CLK_DIV 0x0001
 
-int spiQueueDataPair(uint16_t outA, uint16_t outB);
+typedef uint8_t Ticket;
+typedef uint16_t Data;
+
+typedef struct QueueItem QueueItem;
+struct QueueItem {
+	Data dataA;
+	Data dataB;
+	Ticket ticket;
+	QueueItem* behind;
+} NULL_ITEM;
+
+typedef struct Queue Queue;
+struct Queue {
+	QueueItem* head;
+	QueueItem* tail;
+};
+
+Ticket enQueue(Data dataA,Data dataB);
+QueueItem* deQueue(Ticket ticket);
+
 
 /*	initClockBus
  *

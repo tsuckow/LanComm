@@ -18,7 +18,20 @@ int acdInitDevice() {
 //	acdConfigureSLB();
 //	acdConfigureSLB();
 	int failCode;
-	if (
+	acdConfigCRA();
+	spiReadBlocked();
+	spiReadBlocked();
+	acdConfigCRB();
+	spiReadBlocked();
+	spiReadBlocked();
+	acdConfigCRC();
+	spiReadBlocked();
+	spiReadBlocked();
+	acdConfigCRF();
+	spiReadBlocked();
+	spiReadBlocked();
+	while(1);
+/*	if (
 		(failCode=acdConfigCRB()) ||
 //		(failCode=acdConfigCRD()) ||
 //		(failCode=acdConfigCRE()) ||
@@ -29,7 +42,7 @@ int acdInitDevice() {
 		(failCode=acdConfigCRA())
 	     ) {
 		return failCode;
-	}
+	}*/
 	spiClearOverflow();
 	spiReadBlocked();
 	spiWrite(			//Read from register a on device 2
@@ -72,7 +85,7 @@ int acdConfigCRA() {
 			ACD_cra |		//Write to control registr a
 //			ACD_cra_DATA |		//Configure for data mode.
 //			ACD_cra_MM |		//Configure for mixed mode.
-//			ACD_cra_DLB |		//Configure for digital loopback mode.
+			ACD_cra_DLB |		//Configure for digital loopback mode.
 			ACD_cra_DC		//Set the device count.
 	);
 	spiReadBlocked();
@@ -82,7 +95,7 @@ int acdConfigCRA() {
 			ACD_cra |		//Write to control registr a
 //			ACD_cra_DATA |		//Configure for data mode.
 //			ACD_cra_MM |		//Configure for mixed mode.
-//			ACD_cra_DLB |		//Configure for digital loopback mode.
+			ACD_cra_DLB |		//Configure for digital loopback mode.
 			ACD_cra_DC		//Set the device count.
 	);
 	return 0;//Return no errors.
@@ -114,7 +127,7 @@ int acdConfigCRC() {
 			ACD_C |			//Send a command
 			ACD_device2 |		//Talk to device 2
 			ACD_crc |		//Write to control registr c
-			ACD_crc_PU |		//Power up the entire device.
+//			ACD_crc_PU |		//Power up the entire device.
 			ACD_crc_PUIA |		//Power up the input amplifier.
 			ACD_crc_PUDAC |		//Power up the digital to analogue converter.
 			ACD_crc_PUADC |		//Power up the analogue to digital converter.
@@ -126,7 +139,7 @@ int acdConfigCRC() {
 			ACD_C |			//Send a command
 			ACD_device1 |		//Talk to device 1
 			ACD_crc |		//Write to control registr c
-			ACD_crc_PU |		//Power up the entire device.
+//			ACD_crc_PU |		//Power up the entire device.
 			ACD_crc_PUIA |		//Power up the input amplifier.
 			ACD_crc_PUDAC |		//Power up the digital to analogue converter.
 			ACD_crc_PUADC |		//Power up the analogue to digital converter.
@@ -150,16 +163,16 @@ int acdConfigCRF() {
 			ACD_C |			//Send a command
 			ACD_device2 |		//Talk to device 2
 			ACD_crf |		//Write to control registr c
-			ACD_crf_ALB_AGTM	//Configure for analog loopback mode
-//			ACD_crf_SEEN_AGTE	//Enable single ended mode.
+//			ACD_crf_ALB_AGTM	//Configure for analog loopback mode
+			ACD_crf_SEEN_AGTE	//Enable single ended mode.
 	);
 	spiReadBlocked();
 	spiWrite(				//Configure single ended enable for device 1.
 			ACD_C |			//Send a command
 			ACD_device1 |		//Talk to device 1
 			ACD_crf |		//Write to control registr c
-			ACD_crf_ALB_AGTM	//Configure for analog loopback mode
-//			ACD_crf_SEEN_AGTE	//Enable single ended mode.
+//			ACD_crf_ALB_AGTM	//Configure for analog loopback mode
+			ACD_crf_SEEN_AGTE	//Enable single ended mode.
 	);
 /**/	return 0;//Return no errors.
 }

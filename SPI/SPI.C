@@ -2,6 +2,82 @@
 
 #include "SPI.H"
 
+Queue gOutQueue;
+Queue gInQueue;
+QueueItem* gCurrentItem;
+Ticket gNextTicket=1;
+uint8_t gDataA_B;
+
+
+Ticket enQueue(Data dataA,Data dataB) {
+	QueueItem* newItem = (QueueItem*)malloc(sizeof(QueueItem));
+	if (newItem) {
+		newItem->dataA = dataA;
+		newItem->dataB = dataB;
+		newItem->ticket = gNextTicket++;
+		gOutQueue->tail->behind = newItem;
+		newItem->behind=0;
+		gOutQueue->tail = newItem;
+		return newItem->ticket;
+	} else {
+		return 0;
+	}
+}
+
+QueueItem deQueue(Ticket ticket) {
+	QueueItem found = NULL_ITEM;
+	if (ticket) {//If ticket is not null...
+		uint8_t notDone=1;
+		do {//This loop will block until we know the ticket doesn't exist or it has been recieved.
+			QueueItem* trail = gInQueue.head;//Start searching at the head of the in queue.
+			if (trail) {//If the in queue isn't empty...
+				if (trail->ticket == ticket) {//And if it is at the head of the queue...
+					found = *trail;//Set our return value (copy).
+					gInQueue.head = trail.behind;//Remove it from the queue.
+					if (gInQueue.tail == trail) gInQueue.tail = 0;//If we removed the tail then set it to null.
+					free(trail);//Free the original.
+					notDone=0;//And we're done.
+				} else {//Or if it wasn't at the head of the queue we're gonna have to search through the queue.
+					QueueItem* travel = trail->behind;//Travel will be our index for iterating.
+					while(travel && travel->ticket != ticket) {//Search through.
+						trail = travel;//Increment trail.
+						travel = travel->behind;//Increment travel.
+					}
+					if (travel) {//If we found it.
+						found = *trail;//Set our return value (copy).
+						trail->behind = travel->behind;//Remove it.
+						if (gInQueue.tail == travel) gInQueue.tail = trail;//If we removed the tail then set it to trail.
+						free(travel);//Free the original.
+						notDone=0;//And we're done.
+					}
+				}
+			}
+			if (notDone) {//If it wasn't in the input buffer...
+				if (gCurrentItem->ticket != ticket) {//If this is not the item currently being recieved.
+					for (trail=gOutQueue.head; trail; trail=trail->behind);//Iterate through the out queue searching.
+					if (!trail) notDone=0;//If it isn't in the out queue then it doesn't exist and we need to return the NULL_ITEM.
+				}
+			}
+		} while (notDone);
+		return found;//If we found it then this will return it, if not this will return invalid.
+	} else {//If ticket was null...
+		return NULL_ITEM;//Return an invalid value.
+	}
+}
+
+void spi1Interrupt() {
+	if (SPI1STAT & _SPI1STAT_SPIROV_MASK) {//If we had an overflow.
+		SPI1CONCLR= _SPI1CON_ON_MASK; //SPI1 Config(-): Turn it off.
+		LATECLR = PORTE_ACDRESET_MASK;//PORT E(-): Activate the reset for the ACD.
+	} else {
+			if (gDataA_B) {//If we are sending an A word.
+			} else {//If we are sending a B word.
+			}
+		gDataA_B = !gDataA_B;
+	}
+}
+
+
 /*	initClockBus
  *
  *	Initializes SPI2 in  framed master mode so it constantly clocks.  We will use this 
@@ -68,6 +144,19 @@ int spiInitSPI1() {
 		_SPI1CON_MODE16_MASK;	//16 Bit mode
 	SPI1CONSET= _SPI1CON_ON_MASK; //SPI1 Config(+): Turn it on.
 	// from now on, the device is ready to receive and transmit data
+	
+	gOutQueue.head=0;
+	gOutQueue.tail=0;
+	gInQueue.head=0;
+	gInQueue.tail=0;
+
+	NULL_ITEM.dataA=0;
+	NULL_ITEM.dataB=0;
+	NULL_ITEM.ticket=0;
+	NULL_ITEM.behind=0;
+
+	gCurrentTicket;
+
 	return 0;//Return no errors.
 }
 
