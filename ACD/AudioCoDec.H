@@ -31,7 +31,6 @@ uint16_t acdReadData();
 void acdTestCommunication();
 void acdConfigureSLB();
 
-#define PORTE_ACDRESET_MASK	0x0002
 
 #define ACD_C			0x8000
 #define ACD_R			0x4000

@@ -1,79 +1,127 @@
-
-
 #include "SPI.H"
 
+#pragma interrupt spi1Interrupt ipl7 vector 23
+
 Queue gOutQueue;
+QueueItem* gQueueTransmitting;
+QueueItem* gQueueProcessing;
+QueueItem* gQueueReceiving;
 Queue gInQueue;
-QueueItem* gCurrentItem;
-Ticket gNextTicket=1;
-uint8_t gDataA_B;
+Ticket gNextTicket=0;
+bool gQueueDataAB=true;
+//uint8_t gDataA_B;
 
-
-Ticket enQueue(Data dataA,Data dataB) {
+Ticket spiEnqueue(Data dataA,Data dataB) {
 	QueueItem* newItem = (QueueItem*)malloc(sizeof(QueueItem));
 	if (newItem) {
 		newItem->dataA = dataA;
 		newItem->dataB = dataB;
-		newItem->ticket = gNextTicket++;
-		gOutQueue->tail->behind = newItem;
+		newItem->ticket = (gNextTicket)?(gNextTicket):(++gNextTicket);
+		++gNextTicket;
 		newItem->behind=0;
-		gOutQueue->tail = newItem;
+//		asm("di");
+		if (gOutQueue.tail) {
+			gOutQueue.tail->behind = newItem;
+			gOutQueue.tail = newItem;
+		} else {
+			gOutQueue.tail = newItem;
+			gOutQueue.head = newItem;
+		}
+//		asm("ei");
 		return newItem->ticket;
 	} else {
 		return 0;
 	}
 }
 
-QueueItem deQueue(Ticket ticket) {
-	QueueItem found = NULL_ITEM;
-	if (ticket) {//If ticket is not null...
-		uint8_t notDone=1;
-		do {//This loop will block until we know the ticket doesn't exist or it has been recieved.
-			QueueItem* trail = gInQueue.head;//Start searching at the head of the in queue.
-			if (trail) {//If the in queue isn't empty...
+QueueItem spiDequeue(Ticket ticket) {
+	QueueItemStatus status=spiGetQueueItemStatus(ticket);
+		while(status != QueueItemStatus_DoesNotExist) {//This loop will block until we know the ticket doesn't exist or the item is ready.
+			if (status == QueueItemStatus_WaitingIn) {//If the item is in the input queue.
+				QueueItem desiredQueueItem;
+				QueueItem* trail = gInQueue.head;//Start searching at the head of the in queue.
 				if (trail->ticket == ticket) {//And if it is at the head of the queue...
-					found = *trail;//Set our return value (copy).
-					gInQueue.head = trail.behind;//Remove it from the queue.
+					desiredQueueItem = *trail;//Set our return value (copy).
+					gInQueue.head = trail->behind;//Remove it from the queue.
 					if (gInQueue.tail == trail) gInQueue.tail = 0;//If we removed the tail then set it to null.
 					free(trail);//Free the original.
-					notDone=0;//And we're done.
 				} else {//Or if it wasn't at the head of the queue we're gonna have to search through the queue.
 					QueueItem* travel = trail->behind;//Travel will be our index for iterating.
-					while(travel && travel->ticket != ticket) {//Search through.
+					while(travel->ticket != ticket) {//Search through.
 						trail = travel;//Increment trail.
 						travel = travel->behind;//Increment travel.
 					}
-					if (travel) {//If we found it.
-						found = *trail;//Set our return value (copy).
-						trail->behind = travel->behind;//Remove it.
-						if (gInQueue.tail == travel) gInQueue.tail = trail;//If we removed the tail then set it to trail.
-						free(travel);//Free the original.
-						notDone=0;//And we're done.
-					}
+					desiredQueueItem = *travel;//Set our return value (copy).
+					trail->behind = travel->behind;//Remove it.
+					if (gInQueue.tail == travel) gInQueue.tail = trail;//If we removed the tail then set it to trail.
+					free(travel);//Free the original.
 				}
+				return desiredQueueItem;
 			}
-			if (notDone) {//If it wasn't in the input buffer...
-				if (gCurrentItem->ticket != ticket) {//If this is not the item currently being recieved.
-					for (trail=gOutQueue.head; trail; trail=trail->behind);//Iterate through the out queue searching.
-					if (!trail) notDone=0;//If it isn't in the out queue then it doesn't exist and we need to return the NULL_ITEM.
-				}
-			}
-		} while (notDone);
-		return found;//If we found it then this will return it, if not this will return invalid.
-	} else {//If ticket was null...
-		return NULL_ITEM;//Return an invalid value.
+			status=spiGetQueueItemStatus(ticket);
+		}
+		return NULL_ITEM;//The ticket doesn't refference and existing queue item.
+}
+
+QueueItemStatus spiGetQueueItemStatus(Ticket ticket) {
+	if (ticket) {//If the ticket is not null.
+		QueueItem* travel;//Our temporary pointer for searching the queues.
+		for (travel=gInQueue.head; travel && travel->ticket != ticket; travel=travel->behind);//Iterate through the in queue searching.
+		if (travel) return QueueItemStatus_WaitingIn;//If it was in the input queue return that as the status.
+		if (gQueueReceiving && gQueueReceiving->ticket == ticket) return QueueItemStatus_Receiving;//Check if we are receiving it.
+		if (gQueueProcessing && gQueueProcessing->ticket == ticket) return QueueItemStatus_Processing;//Check if we are processing it.
+		if (gQueueTransmitting && gQueueTransmitting->ticket == ticket) return QueueItemStatus_Transmitting;//Check if we are transmitting it.
+		for (travel=gOutQueue.head; travel && travel->ticket != ticket; travel=travel->behind);//Iterate through the out queue searching.
+		if (travel) return QueueItemStatus_WaitingOut;//If it was in the output queue return that as the status.
 	}
+	return QueueItemStatus_DoesNotExist;//If we didn't return a status yet then we didn't find it, so it doesn't exist.
 }
 
 void spi1Interrupt() {
+	Data trash;
+	IFS0CLR =			//Interrupt Flags(-)
+		_IFS0_SPI1EIF_MASK |	//Error interrupt
+		_IFS0_SPI1TXIF_MASK |	//Transmit interrupt
+		_IFS0_SPI1RXIF_MASK;	//Recieve interrupt
 	if (SPI1STAT & _SPI1STAT_SPIROV_MASK) {//If we had an overflow.
 		SPI1CONCLR= _SPI1CON_ON_MASK; //SPI1 Config(-): Turn it off.
 		LATECLR = PORTE_ACDRESET_MASK;//PORT E(-): Activate the reset for the ACD.
+		IEC0CLR = 			//Interrupt Enable(-)
+			_IEC0_SPI1EIE_MASK |	//Error interrupt
+			_IEC0_SPI1TXIE_MASK |	//Transmit interrupt
+			_IEC0_SPI1RXIE_MASK;	//Recieve interrupt
 	} else {
-			if (gDataA_B) {//If we are sending an A word.
+			if (gQueueDataAB) {//If we are sending an A word.
+				if (gQueueReceiving) gQueueReceiving->dataA = SPI1BUF;
+				else trash = SPI1BUF;
+				if (gQueueTransmitting) SPI1BUF = gQueueTransmitting->dataA;
+				else SPI1BUF = (Data)0;
+//				else SPI1BUF = (Data)0x3C5A;
 			} else {//If we are sending a B word.
+				if (gQueueReceiving) {
+					gQueueReceiving->dataB = SPI1BUF;
+					if (gInQueue.tail) {
+						gInQueue.tail->behind=gQueueReceiving;
+						gInQueue.tail=gQueueReceiving;
+					} else {
+						gInQueue.tail=gInQueue.head=gQueueReceiving;
+					}
+				} else {
+					trash = SPI1BUF;
+				}
+				gQueueReceiving=gQueueProcessing;
+				gQueueProcessing=gQueueTransmitting;
+				if (gQueueTransmitting) {
+					SPI1BUF = gQueueTransmitting->dataB;
+				} else {
+					SPI1BUF = (Data)0;
+//					SPI1BUF = (Data)0x3CA5;
+				}
+				gQueueTransmitting=gOutQueue.head;
+				if (gOutQueue.head) gOutQueue.head = gOutQueue.head->behind;
+				if (!gOutQueue.head) gOutQueue.tail = 0;
 			}
-		gDataA_B = !gDataA_B;
+		gQueueDataAB = !gQueueDataAB;
 	}
 }
 
@@ -135,6 +183,12 @@ int spiInitSPI1() {
 		_IFS0_SPI1EIF_MASK |	//Error interrupt
 		_IFS0_SPI1TXIF_MASK |	//Transmit interrupt
 		_IFS0_SPI1RXIF_MASK;	//Recieve interrupt
+	IPC5CLR =			//Interrupt Priority Control(-).
+		_IPC5_SPI1IP_MASK |	//Clear interrupt priority.
+		_IPC5_SPI1IS_MASK;	//Clear interrupt sub-priority.
+	IPC5SET =				//Interrupt Priority Control(+).
+		(7 << _IPC5_SPI1IP_POSITION) |	//Set to priority 7.
+		(3 << _IPC5_SPI1IP_POSITION);	//Set to sub-priority 3.
 	SPI1STATCLR=_SPI1STAT_SPIROV_MASK;//SPI1 Status(-): Clear recieve overflow.
 	SPI1BRG=CLK_DIV >> 3;//SPI1 Baud Rate Generator(=): Set the divider to 1/8th the clock requency.
 	SPI1CONSET=			//SPI1 Config(+)
@@ -142,6 +196,9 @@ int spiInitSPI1() {
 		_SPI1CON_FRMSYNC_MASK |	//Frame sync
 		_SPI1CON_FRMPOL_MASK |	//Frame polarity
 		_SPI1CON_MODE16_MASK;	//16 Bit mode
+	IEC0SET = 			//Interrupt Enable(+)
+		_IEC0_SPI1EIE_MASK |	//Error interrupt
+		_IEC0_SPI1RXIE_MASK;	//Recieve interrupt
 	SPI1CONSET= _SPI1CON_ON_MASK; //SPI1 Config(+): Turn it on.
 	// from now on, the device is ready to receive and transmit data
 	
@@ -155,7 +212,11 @@ int spiInitSPI1() {
 	NULL_ITEM.ticket=0;
 	NULL_ITEM.behind=0;
 
-	gCurrentTicket;
+	gQueueTransmitting=0;
+	gQueueProcessing=0;
+	gQueueReceiving=0;
+
+	while(!(SPI1STAT & _SPI1STAT_SPITBE_MASK)) SPI1BUF = (Data)0;
 
 	return 0;//Return no errors.
 }

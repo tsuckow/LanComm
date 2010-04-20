@@ -4,10 +4,23 @@
 #include <p32xxxx.h>
 #include <plib.h>
 #include <sys/types.h>
-#define CLK_DIV 0x0001
+#define CLK_DIV 0x0003
+#define PORTE_ACDRESET_MASK	0x000F
+typedef enum bool bool;
+enum bool {false = 0,true = 1};
 
 typedef uint8_t Ticket;
 typedef uint16_t Data;
+
+typedef enum QueueItemStatus QueueItemStatus;
+enum QueueItemStatus {
+	QueueItemStatus_WaitingOut,
+	QueueItemStatus_Transmitting,
+	QueueItemStatus_Processing,
+	QueueItemStatus_Receiving,
+	QueueItemStatus_WaitingIn,
+	QueueItemStatus_DoesNotExist
+};
 
 typedef struct QueueItem QueueItem;
 struct QueueItem {
@@ -23,8 +36,9 @@ struct Queue {
 	QueueItem* tail;
 };
 
-Ticket enQueue(Data dataA,Data dataB);
-QueueItem* deQueue(Ticket ticket);
+Ticket spiEnqueue(Data dataA,Data dataB);
+QueueItem spiDequeue(Ticket ticket);
+QueueItemStatus spiGetQueueItemStatus(Ticket ticket);
 
 
 /*	initClockBus

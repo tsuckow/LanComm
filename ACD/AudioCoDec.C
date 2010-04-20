@@ -1,9 +1,10 @@
 #include "AudioCoDec.H"
 
 int acdInitialize() {
-	int failCode=acdInitInterface();
-	if (failCode) return failCode;
+	int failCode;
 	acdReset();//Reset just for good measure.
+	failCode=acdInitInterface();
+	if (failCode) return failCode;
 //	acdTestCommunication();
 	return acdInitDevice();
 }
@@ -13,11 +14,17 @@ int acdInitInterface() {
 int acdInitDevice() {
 	uint16_t cr1=0;
 	uint16_t cr2=0;
-	spiClearOverflow();
-	spiReadBlocked();
+	QueueItem test;
+//	spiClearOverflow();
+//	spiReadBlocked();
 //	acdConfigureSLB();
 //	acdConfigureSLB();
 	int failCode;
+
+	test=spiDequeue(spiEnqueue(0x8918,0x8118));
+	cr2 = test.dataA;
+	cr1 = test.dataB;
+
 	acdConfigCRA();
 	spiReadBlocked();
 	spiReadBlocked();
@@ -191,8 +198,8 @@ void acdReset() {
 	for (count = 0; count < 0xFFFF; count++);
 	LATESET = PORTE_ACDRESET_MASK;//PORT E(+): Deactivate the reset for the ACD.
 	for (count = 0; count < 0xFFFF; count++);
-	spiClearOverflow();
-	spiReadBlocked();
+//	spiClearOverflow();
+//	spiReadBlocked();
 }
 
 
