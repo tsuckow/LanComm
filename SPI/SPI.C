@@ -66,24 +66,24 @@ QueueItem spiDequeue(Ticket ticket) {
 QueueItemStatus spiGetQueueItemStatus(Ticket ticket) {
 	if (ticket) {//If the ticket is not null.
 		QueueItem* travel;//Our temporary pointer for searching the queues.
-		for (travel=gInQueue.head; travel && travel->ticket != ticket; travel=travel->behind);//Iterate through the in queue searching.
-		if (travel) return QueueItemStatus_WaitingIn;//If it was in the input queue return that as the status.
-		if (gQueueReceiving && gQueueReceiving->ticket == ticket) return QueueItemStatus_Receiving;//Check if we are receiving it.
-		if (gQueueProcessing && gQueueProcessing->ticket == ticket) return QueueItemStatus_Processing;//Check if we are processing it.
-		if (gQueueTransmitting && gQueueTransmitting->ticket == ticket) return QueueItemStatus_Transmitting;//Check if we are transmitting it.
 		for (travel=gOutQueue.head; travel && travel->ticket != ticket; travel=travel->behind);//Iterate through the out queue searching.
 		if (travel) return QueueItemStatus_WaitingOut;//If it was in the output queue return that as the status.
+		if (gQueueTransmitting && gQueueTransmitting->ticket == ticket) return QueueItemStatus_Transmitting;//Check if we are transmitting it.
+		if (gQueueProcessing && gQueueProcessing->ticket == ticket) return QueueItemStatus_Processing;//Check if we are processing it.
+		if (gQueueReceiving && gQueueReceiving->ticket == ticket) return QueueItemStatus_Receiving;//Check if we are receiving it.
+		for (travel=gInQueue.head; travel && travel->ticket != ticket; travel=travel->behind);//Iterate through the in queue searching.
+		if (travel) return QueueItemStatus_WaitingIn;//If it was in the input queue return that as the status.
 	}
 	return QueueItemStatus_DoesNotExist;//If we didn't return a status yet then we didn't find it, so it doesn't exist.
 }
 
 void spi1Interrupt() {
 	Data trash;
-	IFS0CLR =			//Interrupt Flags(-)
-		_IFS0_SPI1EIF_MASK |	//Error interrupt
-		_IFS0_SPI1TXIF_MASK |	//Transmit interrupt
-		_IFS0_SPI1RXIF_MASK;	//Recieve interrupt
 	if (SPI1STAT & _SPI1STAT_SPIROV_MASK) {//If we had an overflow.
+		IFS0CLR =			//Interrupt Flags(-)
+			_IFS0_SPI1EIF_MASK |	//Error interrupt
+			_IFS0_SPI1TXIF_MASK |	//Transmit interrupt
+			_IFS0_SPI1RXIF_MASK;	//Recieve interrupt
 		SPI1CONCLR= _SPI1CON_ON_MASK; //SPI1 Config(-): Turn it off.
 		LATECLR = PORTE_ACDRESET_MASK;//PORT E(-): Activate the reset for the ACD.
 		IEC0CLR = 			//Interrupt Enable(-)
@@ -91,9 +91,12 @@ void spi1Interrupt() {
 			_IEC0_SPI1TXIE_MASK |	//Transmit interrupt
 			_IEC0_SPI1RXIE_MASK;	//Recieve interrupt
 	} else {
+		do {
+			IFS0CLR = _IFS0_SPI1RXIF_MASK;//Interrupt Flags(-): Clear recieve interrupt
 			if (gQueueDataAB) {//If we are sending an A word.
 				if (gQueueReceiving) gQueueReceiving->dataA = SPI1BUF;
 				else trash = SPI1BUF;
+				while(!(SPI1STAT & _SPI1STAT_SPITBE_MASK));//Spin until the transmit buffer is empty.
 				if (gQueueTransmitting) SPI1BUF = gQueueTransmitting->dataA;
 				else SPI1BUF = (Data)0;
 //				else SPI1BUF = (Data)0x3C5A;
@@ -111,6 +114,7 @@ void spi1Interrupt() {
 				}
 				gQueueReceiving=gQueueProcessing;
 				gQueueProcessing=gQueueTransmitting;
+				while(!(SPI1STAT & _SPI1STAT_SPITBE_MASK));//Spin until the transmit buffer is empty.
 				if (gQueueTransmitting) {
 					SPI1BUF = gQueueTransmitting->dataB;
 				} else {
@@ -118,11 +122,45 @@ void spi1Interrupt() {
 //					SPI1BUF = (Data)0x3CA5;
 				}
 				gQueueTransmitting=gOutQueue.head;
-				if (gOutQueue.head) gOutQueue.head = gOutQueue.head->behind;
-				if (!gOutQueue.head) gOutQueue.tail = 0;
+				if (gOutQueue.head) {
+					gOutQueue.head = gOutQueue.head->behind;
+					if (!gOutQueue.head) gOutQueue.tail = 0;
+				}
 			}
-		gQueueDataAB = !gQueueDataAB;
+			gQueueDataAB = !gQueueDataAB;
+		} while(IFS0 & _IFS0_SPI1RXIF_MASK);//Repeat if there is another word received.
 	}
+}
+
+void switchToDMA() {
+	static uint16_t pattern[]={0x3FFF,0x3FFF,0x4000,0x4000};
+	static uint16_t trash;
+	IEC0CLR = 			//Interrupt Enable(-)
+		_IEC0_SPI1TXIE_MASK |	//Transmit interrupt
+		_IEC0_SPI1RXIE_MASK;	//Recieve interrupt
+
+	DCH0ECONSET = 0x10;//Enable cell transfer on IRQ.
+	DCH0INTCLR = 0x8;//Clear the DMA0 block complete event.
+	DCH0ECONCLR = 0xFF << 8;//Clear the IRQ that previously activated this channel.
+	DCH0ECONSET = 24 << 8;//Set this channel activate on SPI1 Transmit.
+	DCH0SSA = KVA_TO_PA(pattern);//Set the source address to start at our buffer.
+	DCH0DSA = KVA_TO_PA(&SPI1BUF);//Set the destination address to be the UART1 transmit register.
+	DCH0SSIZ = 8;//Set the block transfer size (truncated to a byte).
+	DCH0DSIZ = 2;//Set the destination size to 2. (We really don't want to increment that address)
+	DCH0CSIZ = 2;//Set cell size to 2.
+	DCH0CON = 0x90;//Enable this DMA channel.  Set it to automatically re-enable itself on block transfer complete.
+
+	DCH1ECON = 25 << 8;//Set this channel to activate on SPI1 Recieve.
+	DCH1ECONSET = 0x10;//Enable cell transfer on IRQ.
+	DCH1SSA = KVA_TO_PA(&SPI1BUF);//Set the source to the variable that holds the reset value for our timer.
+	DCH1DSA = KVA_TO_PA(&trash);//Set the destination pointer to the Timer 2 value register (the upper half of our timer).
+	DCH1SSIZ = 2;//Set the source size to 2 bytes.
+	DCH1DSIZ = 2;//Set the desination size to 2 bytes.
+	DCH1CSIZ = 2;//Set the cell size to 2 bytes.
+	DCH1CON = 0x90;//Enable this DMA channel.  Set it to automatically re-enable itself on block transfer complete.
+
+
+	DMACON = _DMACON_ON_MASK;//DMA Config(=): Turn on the DMA controller.
 }
 
 
@@ -190,7 +228,7 @@ int spiInitSPI1() {
 		(7 << _IPC5_SPI1IP_POSITION) |	//Set to priority 7.
 		(3 << _IPC5_SPI1IP_POSITION);	//Set to sub-priority 3.
 	SPI1STATCLR=_SPI1STAT_SPIROV_MASK;//SPI1 Status(-): Clear recieve overflow.
-	SPI1BRG=CLK_DIV >> 3;//SPI1 Baud Rate Generator(=): Set the divider to 1/8th the clock requency.
+	SPI1BRG=CLK_DIV >> 5;//SPI1 Baud Rate Generator(=): Set the divider to 1/32nd the clock requency.
 	SPI1CONSET=			//SPI1 Config(+)
 		_SPI1CON_FRMEN_MASK |	//Frame enable
 		_SPI1CON_FRMSYNC_MASK |	//Frame sync

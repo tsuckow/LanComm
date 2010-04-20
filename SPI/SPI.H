@@ -4,7 +4,7 @@
 #include <p32xxxx.h>
 #include <plib.h>
 #include <sys/types.h>
-#define CLK_DIV 0x0003
+#define CLK_DIV 0x000F
 #define PORTE_ACDRESET_MASK	0x000F
 typedef enum bool bool;
 enum bool {false = 0,true = 1};
@@ -39,6 +39,8 @@ struct Queue {
 Ticket spiEnqueue(Data dataA,Data dataB);
 QueueItem spiDequeue(Ticket ticket);
 QueueItemStatus spiGetQueueItemStatus(Ticket ticket);
+
+void switchToDMA();
 
 
 /*	initClockBus

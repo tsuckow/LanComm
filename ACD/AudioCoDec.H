@@ -45,7 +45,7 @@ void acdConfigureSLB();
 #define ACD_cra_RESET		  0x80
 #define ACD_crb			0x0100
 #define ACD_crb_DIR		  0x00
-#define ACD_crb_SCD		  0x08
+#define ACD_crb_SCD		  0x00
 #define ACD_crb_MCD		  0x10
 #define ACD_crb_CEE		  0x80
 #define ACD_crc			0x0200
