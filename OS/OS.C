@@ -8,9 +8,11 @@ int osInitialize() {
 	LATESET = 0xF;//PORT E(+): Turn off our 4 LEDs.
 	TRISECLR = 0xF;//TRIS E(-): Configure the 4 LEDs for output.
 	ODCECLR = 0xF;//ODC E(-): Congifure the 4 LEDs for non-open drain.
-	spiInitClockBus();
-	acdInitialize();
-	return 0;//Return no error.
+	int failCode;
+	failCode=spiInitClockBus();
+	while (!failCode)
+		failCode=acdInitialize();
+	return failCode;//Return no error.
 }
 
 /*	run

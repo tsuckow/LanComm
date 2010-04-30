@@ -10,6 +10,7 @@ Queue gInQueue;
 Ticket gNextTicket=0;
 bool gQueueDataAB=true;
 //uint8_t gDataA_B;
+int gCountPasses=0;
 
 Ticket spiEnqueue(Data dataA,Data dataB) {
 	QueueItem* newItem = (QueueItem*)malloc(sizeof(QueueItem));
@@ -64,15 +65,41 @@ QueueItem spiDequeue(Ticket ticket) {
 }
 
 QueueItemStatus spiGetQueueItemStatus(Ticket ticket) {
+	gCountPasses++;
 	if (ticket) {//If the ticket is not null.
 		QueueItem* travel;//Our temporary pointer for searching the queues.
+		asm("di");
 		for (travel=gOutQueue.head; travel && travel->ticket != ticket; travel=travel->behind);//Iterate through the out queue searching.
-		if (travel) return QueueItemStatus_WaitingOut;//If it was in the output queue return that as the status.
-		if (gQueueTransmitting && gQueueTransmitting->ticket == ticket) return QueueItemStatus_Transmitting;//Check if we are transmitting it.
-		if (gQueueProcessing && gQueueProcessing->ticket == ticket) return QueueItemStatus_Processing;//Check if we are processing it.
-		if (gQueueReceiving && gQueueReceiving->ticket == ticket) return QueueItemStatus_Receiving;//Check if we are receiving it.
+		if (travel) {
+			asm("ei");
+			return QueueItemStatus_WaitingOut;//If it was in the output queue return that as the status.
+		}
+		asm("ei");
+		asm("di");
+		if (gQueueTransmitting && gQueueTransmitting->ticket == ticket) {
+			asm("ei");
+			return QueueItemStatus_Transmitting;//Check if we are transmitting it.
+		}
+		asm("ei");
+		asm("di");
+		if (gQueueProcessing && gQueueProcessing->ticket == ticket) {
+			asm("ei");
+			return QueueItemStatus_Processing;//Check if we are processing it.
+		}
+		asm("ei");
+		asm("di");
+		if (gQueueReceiving && gQueueReceiving->ticket == ticket) {
+			asm("ei");
+			return QueueItemStatus_Receiving;//Check if we are receiving it.
+		}
+		asm("ei");
+		asm("di");
 		for (travel=gInQueue.head; travel && travel->ticket != ticket; travel=travel->behind);//Iterate through the in queue searching.
-		if (travel) return QueueItemStatus_WaitingIn;//If it was in the input queue return that as the status.
+		if (travel) {
+			asm("ei");
+			return QueueItemStatus_WaitingIn;//If it was in the input queue return that as the status.
+		}
+		asm("ei");
 	}
 	return QueueItemStatus_DoesNotExist;//If we didn't return a status yet then we didn't find it, so it doesn't exist.
 }
@@ -80,10 +107,6 @@ QueueItemStatus spiGetQueueItemStatus(Ticket ticket) {
 void spi1Interrupt() {
 	Data trash;
 	if (SPI1STAT & _SPI1STAT_SPIROV_MASK) {//If we had an overflow.
-		IFS0CLR =			//Interrupt Flags(-)
-			_IFS0_SPI1EIF_MASK |	//Error interrupt
-			_IFS0_SPI1TXIF_MASK |	//Transmit interrupt
-			_IFS0_SPI1RXIF_MASK;	//Recieve interrupt
 		SPI1CONCLR= _SPI1CON_ON_MASK; //SPI1 Config(-): Turn it off.
 		LATECLR = PORTE_ACDRESET_MASK;//PORT E(-): Activate the reset for the ACD.
 		IEC0CLR = 			//Interrupt Enable(-)
@@ -133,7 +156,7 @@ void spi1Interrupt() {
 }
 
 void switchToDMA() {
-	static uint16_t pattern[]={0x3FFF,0x3FFF,0x4000,0x4000};
+	static uint16_t pattern[]={0x2AA5,0x2AA5,0x555A,0x555A};
 	static uint16_t trash;
 	IEC0CLR = 			//Interrupt Enable(-)
 		_IEC0_SPI1TXIE_MASK |	//Transmit interrupt

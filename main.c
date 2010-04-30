@@ -12,10 +12,12 @@
 #include "ACD/AudioCoDec.H"
 int main() {
 	INTEnableSystemMultiVectoredInt();//Turn on multi vectored interrupts.
-	if (osInitialize()) {
-		LATECLR = 0xF;//PORT E(-): Turn on our 4 LEDs.
+	int failCode;
+	if (failCode=osInitialize()) {
+		LATESET = 0xF;//PORT E(-): Turn on our 4 LEDs.
 		TRISECLR = 0xF;//TRIS E(-): Configure the 4 LEDs for output.
 		ODCECLR = 0xF;//ODC E(-): Congifure the 4 LEDs for non-open drain.
+		LATECLR = 0xF & (failCode);
 	} else {
 		osRun();
 		osShutdown();

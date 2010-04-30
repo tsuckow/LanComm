@@ -5,7 +5,7 @@
 #include <plib.h>
 #include <sys/types.h>
 #define CLK_DIV 0x000F
-#define PORTE_ACDRESET_MASK	0x000F
+#define PORTE_ACDRESET_MASK	0x0001
 typedef enum bool bool;
 enum bool {false = 0,true = 1};
 
