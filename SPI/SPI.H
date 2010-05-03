@@ -6,42 +6,6 @@
 #include <sys/types.h>
 #define CLK_DIV 0x000F
 #define PORTE_ACDRESET_MASK	0x0001
-typedef enum bool bool;
-enum bool {false = 0,true = 1};
-
-typedef uint8_t Ticket;
-typedef uint16_t Data;
-
-typedef enum QueueItemStatus QueueItemStatus;
-enum QueueItemStatus {
-	QueueItemStatus_WaitingOut,
-	QueueItemStatus_Transmitting,
-	QueueItemStatus_Processing,
-	QueueItemStatus_Receiving,
-	QueueItemStatus_WaitingIn,
-	QueueItemStatus_DoesNotExist
-};
-
-typedef struct QueueItem QueueItem;
-struct QueueItem {
-	Data dataA;
-	Data dataB;
-	Ticket ticket;
-	QueueItem* behind;
-} NULL_ITEM;
-
-typedef struct Queue Queue;
-struct Queue {
-	QueueItem* head;
-	QueueItem* tail;
-};
-
-Ticket spiEnqueue(Data dataA,Data dataB);
-QueueItem spiDequeue(Ticket ticket);
-QueueItemStatus spiGetQueueItemStatus(Ticket ticket);
-
-void switchToDMA();
-
 
 /*	initClockBus
  *
