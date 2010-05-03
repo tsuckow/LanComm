@@ -60,23 +60,21 @@ int spiInitSPI1() {
 	IPC5CLR =			//Interrupt Priority Control(-).
 		_IPC5_SPI1IP_MASK |	//Clear interrupt priority.
 		_IPC5_SPI1IS_MASK;	//Clear interrupt sub-priority.
-	IPC5SET =				//Interrupt Priority Control(+).
-		(7 << _IPC5_SPI1IP_POSITION) |	//Set to priority 7.
-		(3 << _IPC5_SPI1IP_POSITION);	//Set to sub-priority 3.
+//	IPC5SET =				//Interrupt Priority Control(+).
+//		(7 << _IPC5_SPI1IP_POSITION) |	//Set to priority 7.
+//		(3 << _IPC5_SPI1IP_POSITION);	//Set to sub-priority 3.
 	SPI1STATCLR=_SPI1STAT_SPIROV_MASK;//SPI1 Status(-): Clear recieve overflow.
-	SPI1BRG=CLK_DIV >> 5;//SPI1 Baud Rate Generator(=): Set the divider to 1/32nd the clock requency.
+	SPI1BRG= 0x22;//SPI1 Baud Rate Generator(=): Set the divider to 1/46th the clock requency.
 	SPI1CONSET=			//SPI1 Config(+)
-		_SPI1CON_FRMEN_MASK |	//Frame enable
-		_SPI1CON_FRMSYNC_MASK |	//Frame sync
-		_SPI1CON_FRMPOL_MASK |	//Frame polarity
-		_SPI1CON_MODE16_MASK;	//16 Bit mode
-	IEC0SET = 			//Interrupt Enable(+)
-		_IEC0_SPI1EIE_MASK |	//Error interrupt
-		_IEC0_SPI1RXIE_MASK;	//Recieve interrupt
+		_SPI1CON_MODE32_MASK |	//32 Bit mode
+		_SPI1CON_MSTEN_MASK;	//Master mode
+//	IEC0SET = 			//Interrupt Enable(+)
+//		_IEC0_SPI1EIE_MASK |	//Error interrupt
+//		_IEC0_SPI1RXIE_MASK;	//Recieve interrupt
 	SPI1CONSET= _SPI1CON_ON_MASK; //SPI1 Config(+): Turn it on.
 	// from now on, the device is ready to receive and transmit data
 	
-	while(!(SPI1STAT & _SPI1STAT_SPITBE_MASK)) SPI1BUF = (Data)0;
+//	while(!(SPI1STAT & _SPI1STAT_SPITBE_MASK)) SPI1BUF = (Data)0;
 
 	return 0;//Return no errors.
 }

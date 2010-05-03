@@ -5,7 +5,6 @@ int acdInitialize() {
 	acdReset();//Reset just for good measure.
 	failCode=acdInitInterface();
 	if (failCode) return failCode;
-//	acdTestCommunication();
 	return acdInitDevice();
 }
 int acdInitInterface() {
