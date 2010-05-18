@@ -11,8 +11,9 @@
 #include "KP/KeyPad.H"
 #include "ACD/AudioCoDec.H"
 int main() {
-	INTEnableSystemMultiVectoredInt();//Turn on multi vectored interrupts.
+//	INTEnableSystemMultiVectoredInt();//Turn on multi vectored interrupts.
 	int failCode;
+	SYSTEMConfig(80000000L, SYS_CFG_WAIT_STATES | SYS_CFG_PCACHE);
 	if (failCode=osInitialize()) {
 		LATESET = 0xF;//PORT E(-): Turn on our 4 LEDs.
 		TRISECLR = 0xF;//TRIS E(-): Configure the 4 LEDs for output.

@@ -5,7 +5,6 @@
 #include <plib.h>
 #include <sys/types.h>
 #define CLK_DIV 0x000F
-#define PORTE_ACDRESET_MASK	0x0001
 
 /*	initClockBus
  *
@@ -30,21 +29,21 @@ inline void spiUntilTBempty();
 inline void spiUntilRBfull();
 
 //	spiWrite -- Writes 2 bytes to SPI1.
-inline void spiWrite(uint16_t data);
+inline void spiWrite(uint32_t data);
 /*	spiWriteBlocked
  *
  *	Writes 2 bytes to SPI1.  Before the write this function will block with a call to 
  *	untilTBempty.
  */
-inline void spiWriteSPI1Blocked(uint16_t data);
+inline void spiWriteBlocked(uint32_t data);
 
 //	spiRead -- Reads 2 bytes from from SPI1.
-inline uint16_t spiRead();
+inline uint32_t spiRead();
 /*	spiReadBlocked
  *
  *	Reads 2 bytes from SPI1.  Before the read this function will block with a call to 
  *	untilRBfull.
  */
-inline uint16_t spiReadSPI1BLocked();
+inline uint32_t spiReadBlocked();
 
 #endif

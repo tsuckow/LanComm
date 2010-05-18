@@ -11,82 +11,61 @@
 int acdInitialize();
 int acdInitInterface();
 int acdInitDevice();
-
-int acdConfigCRA();
-int acdConfigCRB();
-int acdConfigCRC();
-int acdConfigCRD();
-int acdConfigCRE();
-int acdConfigCRF();
-int acdConfigCRG();
-int acdConfigCRH();
+void acdTest();
 
 void acdReset();
+inline int acdGetDREQ();
+inline void acdPollDREQ();
 
-//This is a blocking write.
-void acdWriteData(uint16_t data);
-//this is a blocking read.
-uint16_t acdReadData();
+void acdCommandWrite(uint8_t address, uint16_t value);
+uint16_t acdCommandRead(uint8_t address);
+uint32_t acdDataTransfer(uint32_t data);
+void acdBasicTests();
+void acdSineTest(uint8_t n);
+void acdSineTest2(uint16_t left, uint16_t right);
+void acdSCITest(uint8_t n);
+void acdFileTests();
 
-void acdTestCommunication();
-void acdConfigureSLB();
+#define PORTE_ACDRESET_MASK		0x0002
+#define PORTE_ACDDREQ_MASK		0x0200
+#define PORTD_ACDXCS_MASK		0x0200
+#define PORTD_ACDXDCS_MASK		0x0100
 
-
-#define ACD_C			0x8000
-#define ACD_R			0x4000
-#define ACD_device1		0x0000
-#define ACD_device2		0x0800
-#define ACD_cra			0x0000
-#define ACD_cra_DATA		  0x01
-#define ACD_cra_MM		  0x02
-#define ACD_cra_DLB		  0x04
-#define ACD_cra_SLB		  0x08
-#define ACD_cra_DC		  0x10
-#define ACD_cra_RESET		  0x80
-#define ACD_crb			0x0100
-#define ACD_crb_DIR		  0x03
-#define ACD_crb_SCD		  0x00
-#define ACD_crb_MCD		  0x10
-#define ACD_crb_CEE		  0x80
-#define ACD_crc			0x0200
-#define ACD_crc_PU		  0x01
-#define ACD_crc_PUAGT		  0x02
-#define ACD_crc_PUIA		  0x04
-#define ACD_crc_PUADC		  0x08
-#define ACD_crc_PUDAC		  0x10
-#define ACD_crc_PUREF		  0x20
-#define ACD_crc_RU		  0x40
-#define ACD_crd			0x0300
-#define ACD_crd_IGS_00		  0x00
-#define ACD_crd_IGS_06		  0x01
-#define ACD_crd_IGS_12		  0x02
-#define ACD_crd_IGS_18		  0x03
-#define ACD_crd_IGS_20		  0x04
-#define ACD_crd_IGS_26		  0x05
-#define ACD_crd_IGS_32		  0x06
-#define ACD_crd_IGS_38		  0x07
-#define ACD_crd_RMOD		  0x08
-#define ACD_crd_OGS_P06		  0x00
-#define ACD_crd_OGS_P03		  0x01
-#define ACD_crd_OGS_P00		  0x02
-#define ACD_crd_OGS_N03		  0x03
-#define ACD_crd_OGS_N06		  0x04
-#define ACD_crd_OGS_N09		  0x05
-#define ACD_crd_OGS_N12		  0x06
-#define ACD_crd_OGS_N15		  0x07
-#define ACD_crd_MUTE		  0x80
-#define ACD_cre			0x0400
-#define ACD_cre_DA		  0x00
-#define ACD_cre_IBYP		  0x20
-#define ACD_cre_DGTE		  0x40
-#define ACD_crf			0x0500
-#define ACD_crf_AGTC		  0x00
-#define ACD_crf_SEEN_AGTE	  0x20
-#define ACD_crf_INV		  0x40
-#define ACD_crf_ALB_AGTM	  0x80
-#define ACD_crg			0x0600
-#define ACD_crg_DGTC_L		  0x00
-#define ACD_crh			0x0700
-#define ACD_crh_DGTC_H		  0x00
+#define ACD_READ			  0x03
+#define ACD_WRITE			  0x02
+#define ACD_MODE_ADDRESS		  0x00
+//#define ACD_MODE_DEFAULT_MASK		0x4800
+#define ACD_MODE_DEFAULT_MASK		0x0800
+#define ACD_MODE_DIFF_MASK		0x0001
+#define ACD_MODE_LAYER12_MASK		0x0002
+#define ACD_MODE_RESET_MASK		0x0004
+#define ACD_MODE_CANCEL_MASK		0x0008
+#define ACD_MODE_EARSPEAKER_LO_MASK	0x0010
+#define ACD_MODE_TESTS_MASK		0x0020
+#define ACD_MODE_STREAM_MASK		0x0040
+#define ACD_MODE_EARSPEAKER_HI_MASK	0x0080
+#define ACD_MODE_DACT_MASK		0x0100
+#define ACD_MODE_SDIORD_MASK		0x0200
+#define ACD_MODE_SDISHARE_MASK		0x0400
+#define ACD_MODE_SDINEW_MASK		0x0800
+#define ACD_MODE_ADPCM_MASK		0x1000
+#define ACD_MODE_WRONG_MASK		0x2000
+#define ACD_MODE_LINE1_MASK		0x4000
+#define ACD_MODE_CLK_RANGE_MASK		0x8000
+#define ACD_STATUS_ADDRESS		  0x01
+#define ACD_BASS_ADDRESS		  0x02
+#define ACD_CLOCKF_ADDRESS		  0x03
+#define ACD_DECODE_TIME_ADDRESS		  0x04
+#define ACD_AUDATA_ADDRESS		  0x05
+#define ACD_WRAM_ADDRESS		  0x06
+#define ACD_WRAMADDR_ADDRESS		  0x07
+#define ACD_HDAT0_ADDRESS		  0x08
+#define ACD_HDAT1_ADDRESS		  0x09
+#define ACD_AIADDR_ADDRESS		  0x0A
+#define ACD_VOL_ADDRESS			  0x0B
+#define ACD_AICTRL0_ADDRESS		  0x0C
+#define ACD_AICTRL1_ADDRESS		  0x0D
+#define ACD_AICTRL2_ADDRESS		  0x0E
+#define ACD_AICTRL3_ADDRESS		  0x0F
 
 #endif

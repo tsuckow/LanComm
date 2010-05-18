@@ -45,7 +45,7 @@ int spiInitSPI1() {
 	It assumes that none of the SPI1 input pins are shared with an analog input. If so, the
 	AD1PCFG and corresponding TRIS registers have to be properly configured.
 */
-	uint16_t trash;
+	uint32_t trash;
 //	TRISDSET=0x0200;//Tris D(+):Set Frame Sync to an input.
 	IEC0CLR = 			//Interrupt Enable(-)
 		_IEC0_SPI1EIE_MASK |	//Error interrupt
@@ -67,6 +67,7 @@ int spiInitSPI1() {
 	SPI1BRG= 0x22;//SPI1 Baud Rate Generator(=): Set the divider to 1/46th the clock requency.
 	SPI1CONSET=			//SPI1 Config(+)
 		_SPI1CON_MODE32_MASK |	//32 Bit mode
+		_SPI1CON_CKE_MASK |	//Set the clock edge to rising edge.
 		_SPI1CON_MSTEN_MASK;	//Master mode
 //	IEC0SET = 			//Interrupt Enable(+)
 //		_IEC0_SPI1EIE_MASK |	//Error interrupt
@@ -90,25 +91,25 @@ inline void spiUntilTBempty() {while(!(SPI1STAT & _SPI1STAT_SPITBE_MASK));/*Wait
 inline void spiUntilRBfull() {while(!(SPI1STAT & _SPI1STAT_SPIRBF_MASK));/*Wait for the recieve buffer to be full.*/}
 
 //	spiWrite -- Writes 2 bytes to SPI1.
-inline void spiWrite(uint16_t data) {SPI1BUF=data;}
+inline void spiWrite(uint32_t data) {SPI1BUF=data;}
 /*	spiWriteBlocked
  *
  *	Writes 2 bytes to SPI1.  Before the write this function will block with a call to 
  *	spiUntilTBempty.
  */
-inline void spiWriteBlocked(uint16_t data) {
+inline void spiWriteBlocked(uint32_t data) {
 	spiUntilTBempty();
 	spiWrite(data);
 }
 
 //	spiRead -- Reads 2 bytes from from SPI1.
-inline uint16_t spiRead() {return (uint16_t)SPI1BUF;}
+inline uint32_t spiRead() {return SPI1BUF;}
 /*	spiReadBlocked
  *
  *	Reads 2 bytes from SPI1.  Before the read this function will block with a call to 
  *	spiUntilRBfull.
  */
-inline uint16_t spiReadBlocked() {
+inline uint32_t spiReadBlocked() {
 	spiUntilRBfull();
 	return spiRead();
 }
