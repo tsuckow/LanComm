@@ -5,8 +5,8 @@
  *	being full scale negative.
  */
 
-//#define VS1053B
-#define VS1033D
+#define VS1053B
+//#define VS1033D
 
 #include <p32xxxx.h>
 #include "../SPI/SPI.H"
