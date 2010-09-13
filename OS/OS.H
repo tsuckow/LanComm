@@ -22,8 +22,8 @@ int osInitialize();
  */
 void osRun();
 
-//#define MASTER
-#define SLAVE
+#define MASTER
+//#define SLAVE
 /*	soundCheck
  *
  *	This function this function will constantly pipe sound from a master 

@@ -21,9 +21,9 @@ int osInitialize() {
  *	This function will run until the device is ready to be shut down.
  */
 void osRun() {
-//	acdTest();
+	acdTest();
 //	uartTest();
-	soundCheck();
+//	soundCheck();
 	while(1);
 }
 
