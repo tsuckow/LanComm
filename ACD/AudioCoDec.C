@@ -1,33 +1,40 @@
 #include "AudioCoDec.H"
+//#define VS1053B
+//#define VS1033D
 
 //This file will conain a header and 32 audio blocks.
-uint8_t file[NUM_BLOCKS*256 + 60];
-uint8_t* fileHeader = file;
-uint8_t* fileData = file+60;
+uint8_t acdFile[NUM_BLOCKS*256 + 60];
+uint8_t* acdFileHeader = acdFile;
+uint8_t* acdFileData = acdFile+60;
 
 int acdInitialize() {
 	int failCode;
-//	acdReset();//Reset just for good measure.
 	failCode=acdInitInterface();
 	if (failCode) return failCode;
 	return acdInitDevice();
 }
 int acdInitInterface() {
-	TRISCSET = 0x10;//Configure sdi for input.
-	LATDSET = PORTD_ACDXCS_MASK | PORTD_ACDXDCS_MASK;//PORT D (-): Deactivate command and data chip select.
-	TRISDCLR = PORTD_ACDXCS_MASK | PORTD_ACDXDCS_MASK;//PORT D (-): Configure both chip selects for outputs.
-	ODCDCLR = PORTD_ACDXCS_MASK | PORTD_ACDXDCS_MASK;//PORT D (-): Configure both chip selects for non-open-drain.
+//	TRISCSET = 0x10;//Configure sdi for input.
+	//PORT D (-): Deactivate command and data chip select.
+	LATDSET = PORTD_ACDXCS_MASK | PORTD_ACDXDCS_MASK;
+	//PORT D (-): Configure both chip selects for outputs.
+	TRISDCLR = PORTD_ACDXCS_MASK | PORTD_ACDXDCS_MASK;
+	//PORT D (-): Configure both chip selects for non-open-drain.
+	ODCDCLR = PORTD_ACDXCS_MASK | PORTD_ACDXDCS_MASK;
 	TRISESET = PORTE_ACDDREQ_MASK;//PORT E (+): Configure DREQ as an input.
 	return spiInitSPI1();
 }
 int acdInitDevice() {
 	acdReset();//Reset just for good measure.
 	acdPollDREQ();
+	acdWarmUpAD();
 	return 0;//Return no errors.
 }
 void acdTest() {
-	acdBasicTests();
-//	acdFileTests();
+//	acdBasicTests();
+	acdFileTests();
+}
+void acdShutdown() {
 }
 void acdBasicTests() {
 	int count;
@@ -35,7 +42,7 @@ void acdBasicTests() {
 	uint16_t status[2];
 	acdCommandWrite(
 			ACD_MODE_ADDRESS,	//Write to the mode register.
-			ACD_MODE_DEFAULT_MASK |	//Write the default values, because we like these ones.
+			ACD_MODE_DEFAULT_MASK |	//Write the default values.
 			ACD_MODE_TESTS_MASK	//Enter testing mode.
 	);
 //	acdSineTest2(0x4000, 0x4000);
@@ -138,7 +145,14 @@ void acdSCITest(uint8_t regAddress) {
 	LATDSET = PORTD_ACDXDCS_MASK;//PORT D (-): Deactivate data chip select.
 	for (count=0;count<0xF;++count);
 }
+void acdWarmUpAD() {
+#ifdef VS1033D
+	acdCommandWrite(ACD_WRAMADDR_ADDRESS,0xC01E);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0800);
+#endif
+}
 void acdApplyPCMPatch() {
+#ifdef VS1053B
 	acdCommandWrite(ACD_WRAMADDR_ADDRESS,0x8010);
 	acdCommandWrite(ACD_WRAM_ADDRESS,0x3e12);
 	acdCommandWrite(ACD_WRAM_ADDRESS,0xb817);
@@ -171,11 +185,53 @@ void acdApplyPCMPatch() {
 	acdCommandWrite(ACD_WRAMADDR_ADDRESS,0x8028);
 	acdCommandWrite(ACD_WRAM_ADDRESS,0x2a00);
 	acdCommandWrite(ACD_WRAM_ADDRESS,0x040e);
+#endif
+#ifdef VS1033D
+	acdCommandWrite(ACD_WRAMADDR_ADDRESS,0x8010);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0006);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x7315);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0030);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0717);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0xb080);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x3c00);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x3d00);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0024);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0000);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x004d);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x001c);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0xedcf);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x281c);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0xa7c0);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0000);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x060e);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x281c);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0xf051);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x6410);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x404d);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0000);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0c00);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x6032);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0024);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0000);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0024);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x281c);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0xf0c1);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x6490);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x0024);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0x2a1c);
+	acdCommandWrite(ACD_WRAM_ADDRESS,0xf040);
+	acdCommandWrite(ACD_AIADDR_ADDRESS,0x0010);
+#endif
 }
 void acdStartRecording() {
 	acdCommandWrite(
 			ACD_AICTRL0_ADDRESS,
+#ifdef VS1053B
 			SAMPLE_FREQUENCY	//Set the sample rate.
+#endif
+#ifdef VS1033D
+			SAMPLE_DIVIDER		//Set the sample divider.
+#endif
 	);
 	acdCommandWrite(
 			ACD_AICTRL1_ADDRESS,
@@ -198,7 +254,7 @@ void acdStartRecording() {
 	);
 	acdApplyPCMPatch();
 }
-void buildFileHeader(uint8_t* header, int n, uint16_t C,uint32_t Fs) {
+void acdBuildFileHeader(uint8_t* header, int n, uint16_t C,uint32_t Fs) {
 	uint16_t* header16=header;
 	uint32_t* header32=header;
 	header[0]='R'; header[1]='I'; header[2]='F'; header[3]='F';
@@ -234,7 +290,8 @@ void buildFileHeader(uint8_t* header, int n, uint16_t C,uint32_t Fs) {
 		++dataPointer;
 	}
 }*/
-void readFile(uint8_t* dataPointer) {//This version of the function translates for this system's endien-ness
+//This version of the function translates for this system's endien-ness
+void acdReadFile(uint8_t* dataPointer) {
 	unsigned int iWord,iByte;
 	for (iWord=0;iWord<NUM_BLOCKS*256/4;++iWord) {
 		unsigned int ready;
@@ -255,20 +312,24 @@ void readFile(uint8_t* dataPointer) {//This version of the function translates f
 	}
 }
 void acdStartPlaying() {
+//	acdCommandWrite(
+//			ACD_STATUS_ADDRESS,	//Write to the status register.
+//			0x2 << 12		//Set swing to 2 (the maximum that won't overdrive the DAC).
+//	);
 	acdCommandWrite(
 			ACD_MODE_ADDRESS,	//Write to the mode register.
 			ACD_MODE_DEFAULT_MASK |	//Write the default values, because we like these ones.
 			ACD_MODE_ADPCM_MASK	//Enter ADPCM mode.
 	);
 }
-void sendFileHeader(uint8_t* header) {
+void acdSendFileHeader(uint8_t* header) {
 	uint32_t* header32=header;
 	unsigned int count;
 	for (count=0;count<15;++count) {
 		acdDataTransfer(header32[count]);
 	}
 }
-void playFile(uint8_t* data,unsigned int blocks) {
+void acdPlayFile(uint8_t* data,unsigned int blocks) {
 	uint16_t mode;
 	uint16_t status;
 	uint16_t hdat0;
@@ -283,7 +344,8 @@ void playFile(uint8_t* data,unsigned int blocks) {
 		acdDataTransfer(data32[count]);
 	}
 }
-void modifyHeader(uint8_t* original,uint8_t* modified) {//This function mofies the header to compensate for this system's endien-ness.
+//This function mofies the header to compensate for this system's endien-ness.
+void acdModifyHeader(uint8_t* original,uint8_t* modified) {
 	unsigned int iWord,iByte;
 	for (iWord=0;iWord<15;++iWord) {
 		for (iByte=0;iByte<4;++iByte) {
@@ -295,26 +357,36 @@ void acdFileTests() {
 	uint16_t mode;
 	uint16_t status[2];
 	uint8_t modifiedHeader[60];
+		acdWarmUpAD();
 
 //	status[0] = acdCommandRead(ACD_STATUS_ADDRESS);
 //	mode = acdCommandRead(ACD_MODE_ADDRESS);
 //	status[1] = acdCommandRead(ACD_STATUS_ADDRESS);
 
-	buildFileHeader(fileHeader,NUM_BLOCKS,NUM_CHANNELS, SAMPLE_FREQUENCY);
-	modifyHeader(fileHeader,modifiedHeader);
+	acdBuildFileHeader(acdFileHeader,NUM_BLOCKS,NUM_CHANNELS, SAMPLE_FREQUENCY);
+	acdModifyHeader(acdFileHeader,modifiedHeader);
 //		acdStartPlaying();
 	while(1) {
+		LATECLR = 0x08;//PORT E (-): Indicate recording mode.
+		LATESET = 0x04;//PORT E (-): Un-Indicate playing mode.
 		acdStartRecording();
-		readFile(fileData);
+		acdReadFile(acdFileData);
 		
 		acdCommandWrite(
-				ACD_MODE_ADDRESS,	//Write to the mode register.
-				ACD_MODE_DEFAULT_MASK |	//Write the default values, because we like these ones.
-				ACD_MODE_RESET_MASK	//Reset.
+				//Write to the mode register.
+				ACD_MODE_ADDRESS,
+				//Write the default values, because we like
+				//these ones.
+				ACD_MODE_DEFAULT_MASK |
+				//Reset.
+				ACD_MODE_RESET_MASK
 		);
+		LATECLR = 0x04;//PORT E (-): Indicate playing mode.
+		LATESET = 0x08;//PORT E (-): Un-Indicate recording mode.
 		acdStartPlaying();
-		sendFileHeader(modifiedHeader);
-		playFile(fileData,NUM_BLOCKS);
+		acdWarmUpAD();
+		acdSendFileHeader(modifiedHeader);
+		acdPlayFile(acdFileData,NUM_BLOCKS);
 	}
 }
 

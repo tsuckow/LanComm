@@ -1,12 +1,12 @@
 #ifndef ACD_H
 #define ACD_H
-/*	A note about the ACD.  It interperets values as raw voltage scales in a 2's 
- *	compliment system with 0x7FFF being full positive and 0x8000 being full scale 
- *	negative.
+/*	A note about the ACD.  It interperets values as raw voltage scales in
+ *	a 2's compliment system with 0x7FFF being full positive and 0x8000
+ *	being full scale negative.
  */
 
-//#define VS1053B
-#define VS1033D
+#define VS1053B
+//#define VS1033D
 
 #include <p32xxxx.h>
 #include "../SPI/SPI.H"
@@ -15,6 +15,7 @@ int acdInitialize();
 int acdInitInterface();
 int acdInitDevice();
 void acdTest();
+void acdShutdown();
 
 void acdReset();
 inline int acdGetDREQ();
@@ -30,11 +31,15 @@ void acdSCITest(uint8_t n);
 
 void acdApplyPCMPatch();
 void acdStartRecording();
-void buildFileHeader(uint8_t* header, int n, uint16_t C,uint32_t Fs);
-void readFile(uint8_t* fileStart);
+void acdWarmUpAD();
+extern uint8_t* acdFileHeader;
+extern uint8_t* acdFileData;
+void acdBuildFileHeader(uint8_t* header, int n, uint16_t C,uint32_t Fs);
+void acdModifyHeader(uint8_t* original,uint8_t* modified);
+void acdReadFile(uint8_t* fileStart);
 void acdStartPlaying();
-void sendFileHeader(uint8_t* header);
-void playFile(uint8_t* data,unsigned int blocks);
+void acdSendFileHeader(uint8_t* header);
+void acdPlayFile(uint8_t* data,unsigned int blocks);
 void acdFileTests();
 
 #define PORTE_ACDRESET_MASK		0x0002
@@ -44,11 +49,12 @@ void acdFileTests();
 #define NUM_BLOCKS			  0x01
 #define NUM_CHANNELS			  0x01
 #define SAMPLE_FREQUENCY		  8000U
+#define SAMPLE_DIVIDER			     6U
 
 #define ACD_READ			  0x03
 #define ACD_WRITE			  0x02
 #define ACD_MODE_ADDRESS		  0x00
-#define ACD_MODE_DEFAULT_MASK		0x4800
+#define ACD_MODE_DEFAULT_MASK		0x0800
 #define ACD_MODE_DIFF_MASK		0x0001
 #define ACD_MODE_LAYER12_MASK		0x0002
 #define ACD_MODE_RESET_MASK		0x0004

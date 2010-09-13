@@ -11,7 +11,8 @@
 
 /*	initialize
  *
- *	Initializes everything.  Returns 0 on success.  Returns an error code on failure.
+ *	Initializes everything.  Returns 0 on success.  Returns an error code
+ *	on failure.
  */
 int osInitialize();
 
@@ -21,9 +22,19 @@ int osInitialize();
  */
 void osRun();
 
+//#define MASTER
+#define SLAVE
+/*	soundCheck
+ *
+ *	This function this function will constantly pipe sound from a master 
+ *	device to a slave device.
+ */
+void soundCheck();
+
 /*	shutdown
  *
- *	This function will perform any necessary shutdown operations and then exit.
+ *	This function will perform any necessary shutdown operations and then
+ *	exit.
  */
 void osShutdown();
 
