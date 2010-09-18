@@ -330,13 +330,14 @@ void acdSendFileHeader(uint8_t* header) {
 	}
 }
 void acdPlayFile(uint8_t* data,unsigned int blocks) {
+	unsigned int words=blocks*256/4;
 	uint16_t mode;
 	uint16_t status;
 	uint16_t hdat0;
 	uint16_t hdat1;
 	unsigned int count;
 	uint32_t* data32=data;
-	for (count=0;count<blocks*256;++count) {
+	for (count=0;count<words;++count) {
 //		mode = acdCommandRead(ACD_MODE_ADDRESS);
 //		status = acdCommandRead(ACD_STATUS_ADDRESS);
 //		hdat0 = acdCommandRead(ACD_HDAT0_ADDRESS);

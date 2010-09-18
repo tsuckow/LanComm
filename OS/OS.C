@@ -76,11 +76,11 @@ void soundCheck() {
 			data = acdCommandRead(ACD_HDAT0_ADDRESS);
 			(&data32)[1] = (uint8_t)(data>>8);
 			(&data32)[0] = (uint8_t)(data);
-			uartTXPollWrite((uint8_t*)(&data32)[0]);
-			uartTXPollWrite((uint8_t*)(&data32)[1]);
-			uartTXPollWrite((uint8_t*)(&data32)[2]);
-			uartTXPollWrite((uint8_t*)(&data32)[3]);
-			LATEINV = 0x04;//PORT E (~): Blink the white light.
+			uartTXPollWrite(((uint8_t*)(&data32))[0]);
+			uartTXPollWrite(((uint8_t*)(&data32))[1]);
+			uartTXPollWrite(((uint8_t*)(&data32))[2]);
+			uartTXPollWrite(((uint8_t*)(&data32))[3]);
+//			LATEINV = 0x04;//PORT E (~): Blink the white light.
 		}
 		
 		acdReadFile(acdFileData);
@@ -115,12 +115,12 @@ void soundCheck() {
 		
 		uint32_t data32;
 		while (1) {
-			(uint8_t*)(&data32)[0]=uartRXPollRead();
-			(uint8_t*)(&data32)[1]=uartRXPollRead();
-			(uint8_t*)(&data32)[2]=uartRXPollRead();
-			(uint8_t*)(&data32)[3]=uartRXPollRead();
+			((uint8_t*)(&data32))[0]=uartRXPollRead();
+			((uint8_t*)(&data32))[1]=uartRXPollRead();
+			((uint8_t*)(&data32))[2]=uartRXPollRead();
+			((uint8_t*)(&data32))[3]=uartRXPollRead();
 			acdDataTransfer(data32);
-			LATEINV = 0x01;//PORT E (~): Blink the ???? light.
+//			LATEINV = 0x01;//PORT E (~): Blink the ???? light.
 		}
 		
 		acdPlayFile(acdFileData,NUM_BLOCKS);
