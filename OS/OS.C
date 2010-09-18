@@ -76,10 +76,10 @@ void soundCheck() {
 			data = acdCommandRead(ACD_HDAT0_ADDRESS);
 			(&data32)[1] = (uint8_t)(data>>8);
 			(&data32)[0] = (uint8_t)(data);
-			uartTXPollWrite((uint8_t*)(&data32)[0]);
-			uartTXPollWrite((uint8_t*)(&data32)[1]);
-			uartTXPollWrite((uint8_t*)(&data32)[2]);
-			uartTXPollWrite((uint8_t*)(&data32)[3]);
+			uartTXPollWrite(((uint8_t*)(&data32))[0]);
+			uartTXPollWrite(((uint8_t*)(&data32))[1]);
+			uartTXPollWrite(((uint8_t*)(&data32))[2]);
+			uartTXPollWrite(((uint8_t*)(&data32))[3]);
 			LATEINV = 0x04;//PORT E (~): Blink the white light.
 		}
 		

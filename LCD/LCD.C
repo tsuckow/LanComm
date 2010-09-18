@@ -1,12 +1,4 @@
-#include <p32xxxx.h>
-#include <plib.h>
-
-//FUCK THIS TIMING SHIT IN THE FUCKING ASS, MOTHER FUCKER
-
-#pragma config POSCMOD=XT, FNOSC=PRIPLL, FPLLIDIV=DIV_2, FPLLMUL=MUL_20, FPLLODIV=DIV_1
-#pragma config FPBDIV=DIV_1, FWDTEN=OFF, CP=OFF, BWP=OFF
-
-//I AM GOING TO BREAK SOMETHING
+#include "LCD.H"
 
 int  LCDConfiguration();
 int  TMRConfiguration();
@@ -14,7 +6,7 @@ void TMRRST(int num);
 int  LCDInitialization();
 int  LCDWrite(int value);
 
-int main()
+void lcdTest()
 {
 	LCDConfiguration();
 	TMRConfiguration();
@@ -30,8 +22,6 @@ int main()
 	LCDWrite(0x69);		//i
 	LCDWrite(0x74);		//t
 	LCDWrite(0x21);		//!
-
-	return 0;
 }
 
 int LCDConfiguration()
