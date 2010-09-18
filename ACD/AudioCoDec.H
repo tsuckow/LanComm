@@ -40,6 +40,7 @@ void acdReadFile(uint8_t* fileStart);
 void acdStartPlaying();
 void acdSendFileHeader(uint8_t* header);
 void acdPlayFile(uint8_t* data,unsigned int blocks);
+void acdPlayFile_(uint8_t* file,unsigned int bytes);
 void acdFileTests();
 
 #define PORTE_ACDRESET_MASK		0x0002
