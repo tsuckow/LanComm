@@ -11,7 +11,7 @@
 #include "KP/KeyPad.H"
 #include "ACD/AudioCoDec.H"
 int main() {
-//	INTEnableSystemMultiVectoredInt();//Turn on multi vectored interrupts.
+	INTEnableSystemMultiVectoredInt();//Turn on multi vectored interrupts.
 	int failCode;
 	SYSTEMConfig(80000000L, SYS_CFG_WAIT_STATES | SYS_CFG_PCACHE);
 	if (failCode=osInitialize()) {

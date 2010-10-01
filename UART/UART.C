@@ -21,7 +21,7 @@ int uartInitialize() {
 		_IFS0_U1EIF_MASK |	//Error interrupt
 		_IFS0_U1RXIF_MASK |	//Receive interrupt
 		_IFS0_U1TXIF_MASK;	//Transmit interrupt
-	IPC6CLR = //Iterrupt priority(-): Clear UART1 interrupt priorities.
+	IPC6SET = //Iterrupt priority(+): Set UART1 interrupt priorities.
 		_IPC6_U1IS_MASK |	//Sub-priority
 		_IPC6_U1IP_MASK;	//Priority
 	U1BRG = (uint16_t)(((float)80000000/(float)(16*BAUD_RATE))-0.5);//Set Baud
