@@ -2,6 +2,7 @@
 #define UART_H
 #include <sys/types.h>
 
+#define BAUD_RATE 9600
 enum protocol {
 	pQuery, pResponse, pReady, pYes, pNo
 };
@@ -14,7 +15,7 @@ uint8_t uartTXPoll();
 void uartTXWrite(uint8_t data);
 void uartTXPollWrite(uint8_t data);
 
-uint8_t uartRXPoll();
+uint8_t uartRXReady();
 uint8_t uartRXRead();
 uint8_t uartRXPollRead();
 #endif

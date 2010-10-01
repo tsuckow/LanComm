@@ -10,6 +10,9 @@
 //#define SLAVE
 
 int uartInitialize() {
+	TRISDSET = 0x4000;
+	TRISDCLR = 0x8000;
+	ODCDCLR = 0x8000;
 	IEC0CLR = //Interrupt enable(-): Disable UART1 interrupts
 		_IEC0_U1EIE_MASK |	//Error interrupt
 		_IEC0_U1RXIE_MASK |	//Receive interrupt
@@ -21,14 +24,16 @@ int uartInitialize() {
 	IPC6CLR = //Iterrupt priority(-): Clear UART1 interrupt priorities.
 		_IPC6_U1IS_MASK |	//Sub-priority
 		_IPC6_U1IP_MASK;	//Priority
-	U1BRG = 0x12; //Set Baud rate to 116.3k
+	U1BRG = (uint16_t)(((float)80000000/(float)(16*BAUD_RATE))-0.5);//Set Baud
 	U1STA = 0;//Clear status.
 	U1MODE = //UART1 mode(=): Set the mode for UART1.
-		_U1MODE_UEN1_MASK |	//Use TX,RX,RTS,and CTS.
-		_U1MODE_ON_MASK;	//On
+//		_U1MODE_RTSMD_MASK |	//Use simplex instead of flow control.
+		_U1MODE_UEN1_MASK;	//Use TX,RX,RTS,and CTS.
 	U1STASET = //Enable transmitter and receiver.
 		_U1STA_UTXEN_MASK |	//Transmitter
 		_U1STA_URXEN_MASK;	//Receiver
+	U1MODE = //UART1 mode(=): Set the mode for UART1.
+		_U1MODE_ON_MASK;	//On
 	return 0;
 }
 void uartTest() {
@@ -69,7 +74,7 @@ void uartTXPollWrite(uint8_t data) {
 	uartTXWrite(data);
 }
 
-uint16_t uartRXReady() {
+uint8_t uartRXReady() {
 	return(U1STA & _U1STA_URXDA_MASK);
 }
 uint8_t uartRXRead() {

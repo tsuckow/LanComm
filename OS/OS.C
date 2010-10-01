@@ -13,6 +13,7 @@ int osInitialize() {
 	failCode=spiInitClockBus();
 	if (!failCode) failCode=acdInitialize();
 	if (!failCode) failCode=uartInitialize();
+	if (!failCode) failCode=mpInitialize();
 	return failCode;//Return no error.
 }
 
@@ -21,9 +22,10 @@ int osInitialize() {
  *	This function will run until the device is ready to be shut down.
  */
 void osRun() {
-	acdTest();
+//	acdTest();
 //	uartTest();
 //	soundCheck();
+	mpTest();
 	while(1);
 }
 
@@ -136,5 +138,6 @@ void soundCheck() {
 void osShutdown() {
 	acdShutdown();
 	uartShutdown();
+	mpShutdown();
 }
 
