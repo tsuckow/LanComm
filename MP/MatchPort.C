@@ -45,24 +45,59 @@ int mpInitialize() {
 }
 void mpTest() {
 	int count;
+	int c2=0;
+	
+/*		for(count=0;count<0x8000000;count++);
+		uartTXPollWrite('A');
+		for(count=0;count<0x800000;count++);
+		uartTXPollWrite('T');
+		for(count=0;count<0x800000;count++);
+		uartTXPollWrite('?');/**/
+	
 	IEC0SET = //Interrupt enable(+): Enable UART1 interrupts
 		_IEC0_U1RXIE_MASK;	//Receive interrupt
-	strIndex=0;
+	strIndex=0;/**/
 
-	while(strIndex==0) {
-		for(count=0;count<0x80000;count++);
-		uartTXPollWrite('x');
-	}
+/*		for(count=0;count<0xC00000;count++);
+		uartTXPollWrite('+');
+		for(count=0;count<0xC00000;count++);
+		uartTXPollWrite('+');
+		for(count=0;count<0xC00000;count++);
+		uartTXPollWrite('+');/**/
+/*		for(count=0;count<0xC00000;count++);
+		uartTXPollWrite('A');
+		for(count=0;count<0xC00000;count++);
+		uartTXPollWrite('T');
+//		for(count=0;count<0xC00000;count++);
+//		uartTXPollWrite('?');
+		for(count=0;count<0xC00000;count++);
+		uartTXPollWrite(0x0D);
+		for(count=0;count<0xC00000;count++);
+		uartTXPollWrite(0x0A);
+		for(count=0;count<0xC00000;count++);
+		uartTXPollWrite(0x0D);
+		for(count=0;count<0xC00000;count++);
+		uartTXPollWrite(0x0A);
+		/**/
+	while(strIndex==0 && c2 < 3) {
+		for(count=0;count<0xC00000;count++);
+		uartTXPollWrite(0x78);
+//		for(count=0;count<0x80000;count++);
+		++c2;
+	}/**/
+//		for(count=0;count<0x1000000;count++);
 	while(!strReceived) count++;
 	LATECLR = 0x8;
 	strReceived=0;
 	strIndex=0;
 	U1STASET = //Enable transmitter.
 		_U1STA_UTXEN_MASK;
-	for(count=0;count<0x8000000;count++);
-	uartTXPollWrite(0x0A);
-	for(count=0;count<0x8000000;count++);
-	uartTXPollWrite(0x0D);
+	while(strIndex==0) {
+		for(count=0;count<0x8000000;count++);
+		uartTXPollWrite(0x0A);
+//		for(count=0;count<0x8000000;count++);
+//		uartTXPollWrite(0x0D);
+	}
 	while(!strReceived);
 	LATESET = 0x8;
 	while(1);

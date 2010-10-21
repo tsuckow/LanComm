@@ -5,8 +5,8 @@
  *	being full scale negative.
  */
 
-//#define VS1053B
-#define VS1033D
+#define VS1053B
+//#define VS1033D
 
 #include <p32xxxx.h>
 #include "../SPI/SPI.H"
@@ -47,7 +47,7 @@ void acdFileTests();
 #define PORTE_ACDDREQ_MASK		0x0200
 #define PORTD_ACDXCS_MASK		0x0200
 #define PORTD_ACDXDCS_MASK		0x0100
-#define NUM_BLOCKS			  0x10
+#define NUM_BLOCKS			  0x20
 #define NUM_CHANNELS			  0x01
 #define SAMPLE_FREQUENCY		  8000U
 #define SAMPLE_DIVIDER			     6U

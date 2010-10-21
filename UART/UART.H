@@ -2,7 +2,7 @@
 #define UART_H
 #include <sys/types.h>
 
-#define BAUD_RATE 9600
+#define BAUD_RATE 9804
 enum protocol {
 	pQuery, pResponse, pReady, pYes, pNo
 };

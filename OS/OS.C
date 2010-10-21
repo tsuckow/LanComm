@@ -13,7 +13,7 @@ int osInitialize() {
 	failCode=spiInitClockBus();
 	if (!failCode) failCode=acdInitialize();
 	if (!failCode) failCode=uartInitialize();
-	if (!failCode) failCode=mpInitialize();
+//	if (!failCode) failCode=mpInitialize();//No more network.
 	return failCode;//Return no error.
 }
 
@@ -23,9 +23,9 @@ int osInitialize() {
  */
 void osRun() {
 //	acdTest();
-//	uartTest();
+	uartTest();
 //	soundCheck();
-	mpTest();
+//	mpTest();//No more network.
 	while(1);
 }
 

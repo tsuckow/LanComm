@@ -100,12 +100,6 @@ uint16_t acdCommandRead(uint8_t address) {
 }
 uint32_t acdDataTransfer(uint32_t data) {
 	int count;
-	uint32_t dataBigEndian;
-	dataBigEndian =
-		(data & 0xFF000000) >> 24 |
-		(data & 0x00FF0000) >> 8 |
-		(data & 0x0000FF00) << 8 |
-		(data & 0x000000FF) << 24;
 	acdPollDREQ();
 	LATDCLR = PORTD_ACDXDCS_MASK;//PORT D (+): Activate data chip select.
 	spiWriteBlocked(data);
@@ -299,8 +293,6 @@ void acdBuildFileHeader(uint8_t* header, int n, uint16_t C,uint32_t Fs) {
 }*/
 //This version of the function translates for this system's endien-ness
 void acdReadFile(uint8_t* dataPointer) {
-	uint16_t* data16=(uint16_t*)dataPointer;
-	uint32_t* data32=(uint32_t*)dataPointer;
 	unsigned int iWord,iByte;
 	for (iWord=0;iWord<NUM_BLOCKS*256/4;++iWord) {
 		unsigned int ready;
@@ -309,17 +301,15 @@ void acdReadFile(uint8_t* dataPointer) {
 			ready=acdCommandRead(ACD_HDAT1_ADDRESS);
 		} while (ready == 0);
 		data = acdCommandRead(ACD_HDAT0_ADDRESS);
-//		dataPointer[iWord*4+3] = (uint8_t)(data>>8);
-//		dataPointer[iWord*4+2] = (uint8_t)(data);
-		data16[iWord*2+1] = data;
+		dataPointer[iWord*4+3] = (uint8_t)(data>>8);
+		dataPointer[iWord*4+2] = (uint8_t)(data);
 		
 		do {
 			ready=acdCommandRead(ACD_HDAT1_ADDRESS);
 		} while (ready == 0);
 		data = acdCommandRead(ACD_HDAT0_ADDRESS);
-//		dataPointer[iWord*4+1] = (uint8_t)(data>>8);
-//		dataPointer[iWord*4+0] = (uint8_t)(data);
-		data16[iWord*2+0] = data;
+		dataPointer[iWord*4+1] = (uint8_t)(data>>8);
+		dataPointer[iWord*4+0] = (uint8_t)(data);
 	}
 }
 void acdStartPlaying() {
@@ -341,34 +331,19 @@ void acdSendFileHeader(uint8_t* header) {
 	}
 }
 void acdPlayFile(uint8_t* data,unsigned int blocks) {
+	unsigned int words=blocks*256/4;
 	uint16_t mode;
 	uint16_t status;
 	uint16_t hdat0;
 	uint16_t hdat1;
 	unsigned int count;
 	uint32_t* data32=(uint32_t*)data;
-	for (count=0;count<blocks*256;++count) {
-//		mode = acdCommandRead(ACD_MODE_ADDRESS);
-//		status = acdCommandRead(ACD_STATUS_ADDRESS);
-		hdat0 = acdCommandRead(ACD_HDAT0_ADDRESS);
-		hdat1 = acdCommandRead(ACD_HDAT1_ADDRESS);
-		acdDataTransfer(data32[count]);
-	}
-}
-void acdPlayFile_(uint8_t* file,unsigned int bytes) {
-	unsigned int words=bytes>>2;
-	uint16_t mode;
-	uint16_t status;
-	uint16_t hdat0;
-	uint16_t hdat1;
-	unsigned int count;
-	uint32_t* file32=(uint32_t*)file;
-	for (count=0;count<words;count) {
+	for (count=0;count<words;++count) {
 //		mode = acdCommandRead(ACD_MODE_ADDRESS);
 //		status = acdCommandRead(ACD_STATUS_ADDRESS);
 //		hdat0 = acdCommandRead(ACD_HDAT0_ADDRESS);
 //		hdat1 = acdCommandRead(ACD_HDAT1_ADDRESS);
-		acdDataTransfer(file32[count]);
+		acdDataTransfer(data32[count]);
 	}
 }
 //This function mofies the header to compensate for this system's endien-ness.
@@ -376,19 +351,15 @@ void acdModifyHeader(uint8_t* original,uint8_t* modified) {
 	unsigned int iWord,iByte;
 	for (iWord=0;iWord<15;++iWord) {
 		for (iByte=0;iByte<4;++iByte) {
-//			modified[iWord*4 + 3-iByte] = original[iWord*4 + iByte];
-			modified[iWord*4 + iByte] = original[iWord*4 + iByte];
+			modified[iWord*4 + 3-iByte] = original[iWord*4 + iByte];
 		}
 	}
 }
 void acdFileTests() {
-	int replay;
 	uint16_t mode;
-	uint16_t hdat0;
-	uint16_t hdat1;
 	uint16_t status[2];
 	uint8_t modifiedHeader[60];
-		acdWarmUpAD();
+	acdWarmUpAD();
 
 //	status[0] = acdCommandRead(ACD_STATUS_ADDRESS);
 //	mode = acdCommandRead(ACD_MODE_ADDRESS);
@@ -399,7 +370,7 @@ void acdFileTests() {
 //		acdStartPlaying();
 	while(1) {
 		LATECLR = 0x08;//PORT E (-): Indicate recording mode.
-		LATESET = 0x04;//PORT E (-): Un-Indicate playing mode.
+		LATESET = 0x01;//PORT E (-): Un-Indicate playing mode.
 		acdStartRecording();
 		acdReadFile(acdFileData);
 		
@@ -408,19 +379,12 @@ void acdFileTests() {
 				ACD_MODE_DEFAULT_MASK |
 				ACD_MODE_RESET_MASK
 		);
-		LATECLR = 0x04;//PORT E (-): Indicate playing mode.
+		LATECLR = 0x01;//PORT E (-): Indicate playing mode.
 		LATESET = 0x08;//PORT E (-): Un-Indicate recording mode.
 		acdStartPlaying();
 		acdWarmUpAD();
-		for (replay=0;replay<0x01;replay++) {
-//			acdSendFileHeader(acdFileHeader);
-//			acdSendFileHeader(modifiedHeader);
-//			acdPlayFile(acdFileData,NUM_BLOCKS);
-			acdPlayFile_(acdFileData,NUM_BLOCKS*256+60);
-//			hdat0 = acdCommandRead(ACD_HDAT0_ADDRESS);
-//			hdat1 = acdCommandRead(ACD_HDAT1_ADDRESS);
-//			replay++;
-		}
+		acdSendFileHeader(modifiedHeader);
+		acdPlayFile(acdFileData,NUM_BLOCKS);
 	}
 }
 
