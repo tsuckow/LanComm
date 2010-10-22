@@ -6,7 +6,7 @@
 //#include "../KP/KeyPad.H"
 //#include "../ACD/AudioCoDec.H"
 
-#pragma interrupt uartInterrupt ipl7 vector 24
+//#pragma interrupt uartInterrupt ipl7 vector 24
 int strIndex=0;
 int strReceived=0;
 char str[255];

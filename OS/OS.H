@@ -9,6 +9,9 @@
 #include "../KP/KeyPad.H"
 #include "../ACD/AudioCoDec.H"
 
+typedef enum state {
+	sIdle,sSyncing,sReceiving,sPlaying,sRecording,sSending
+} state;
 /*	initialize
  *
  *	Initializes everything.  Returns 0 on success.  Returns an error code
@@ -21,6 +24,9 @@ int osInitialize();
  *	This function will run until the device is ready to be shut down.
  */
 void osRun();
+
+void osPlayMode(state* current);
+void osRecordMode(state* current);
 
 #define MASTER
 //#define SLAVE

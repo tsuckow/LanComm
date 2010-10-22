@@ -293,24 +293,31 @@ void acdBuildFileHeader(uint8_t* header, int n, uint16_t C,uint32_t Fs) {
 }*/
 //This version of the function translates for this system's endien-ness
 void acdReadFile(uint8_t* dataPointer) {
+	uint32_t* data32=(uint32_t*)(dataPointer);
 	unsigned int iWord,iByte;
 	for (iWord=0;iWord<NUM_BLOCKS*256/4;++iWord) {
-		unsigned int ready;
-		uint16_t data;
-		do {
-			ready=acdCommandRead(ACD_HDAT1_ADDRESS);
-		} while (ready == 0);
-		data = acdCommandRead(ACD_HDAT0_ADDRESS);
-		dataPointer[iWord*4+3] = (uint8_t)(data>>8);
-		dataPointer[iWord*4+2] = (uint8_t)(data);
-		
-		do {
-			ready=acdCommandRead(ACD_HDAT1_ADDRESS);
-		} while (ready == 0);
-		data = acdCommandRead(ACD_HDAT0_ADDRESS);
-		dataPointer[iWord*4+1] = (uint8_t)(data>>8);
-		dataPointer[iWord*4+0] = (uint8_t)(data);
+		data32[iWord]=acdReadAudio();
 	}
+}
+uint32_t acdReadAudio() {
+	uint32_t data32;
+	uint8_t* dataPointer=(uint8_t*)(&data32);
+	unsigned int ready;
+	uint16_t data;
+	do {
+		ready=acdCommandRead(ACD_HDAT1_ADDRESS);
+	} while (ready == 0);
+	data = acdCommandRead(ACD_HDAT0_ADDRESS);
+	dataPointer[3] = (uint8_t)(data>>8);
+	dataPointer[2] = (uint8_t)(data);
+	
+	do {
+		ready=acdCommandRead(ACD_HDAT1_ADDRESS);
+	} while (ready == 0);
+	data = acdCommandRead(ACD_HDAT0_ADDRESS);
+	dataPointer[1] = (uint8_t)(data>>8);
+	dataPointer[0] = (uint8_t)(data);
+	return data32;
 }
 void acdStartPlaying() {
 //	acdCommandWrite(

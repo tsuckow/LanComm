@@ -5,8 +5,8 @@
  *	being full scale negative.
  */
 
-#define VS1053B
-//#define VS1033D
+//#define VS1053B
+#define VS1033D
 
 #include <p32xxxx.h>
 #include "../SPI/SPI.H"
@@ -37,6 +37,7 @@ extern uint8_t* acdFileData;
 void acdBuildFileHeader(uint8_t* header, int n, uint16_t C,uint32_t Fs);
 void acdModifyHeader(uint8_t* original,uint8_t* modified);
 void acdReadFile(uint8_t* fileStart);
+uint32_t acdReadAudio();
 void acdStartPlaying();
 void acdSendFileHeader(uint8_t* header);
 void acdPlayFile(uint8_t* data,unsigned int blocks);

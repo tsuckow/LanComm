@@ -63,7 +63,40 @@ void uartTest() {
 void uartShutdown() {
 }
 
-uint16_t uartTXFull() {
+void uartQuery(protocol piece) {
+	uartTXPollWrite((uint8_t)pQuery);
+	uartTXPollWrite((uint8_t)piece);
+}
+
+void uartRespond(protocol piece) {
+	uartTXPollWrite((uint8_t)pResponse);
+	uartTXPollWrite((uint8_t)piece);
+}
+void uartSync() {
+	uartTXPollWrite((uint8_t)pSync);
+}
+
+protocol uartProcessQuery(protocol piece) {
+	static protocol last=pNull;
+	protocol returnVal = pNull;
+	if (last==pQuery) returnVal=piece;
+	last=piece;
+	return returnVal;
+}
+
+protocol uartProcessResponse(protocol piece) {
+	static protocol last=pNull;
+	protocol returnVal = pNull;
+	if (last==pResponse) returnVal=piece;
+	last=piece;
+	return returnVal;
+}
+
+uint8_t uartProcessSync(protocol piece) {
+	return piece == pSync;
+}
+
+uint8_t uartTXFull() {
 	return(U1STA & _U1STA_UTXBF_MASK);
 }
 void uartTXWrite(uint8_t data) {
