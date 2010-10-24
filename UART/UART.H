@@ -3,7 +3,7 @@
 #include <sys/types.h>
 
 #define BAUD_RATE 512000
-#define MASTER
+//#define MASTER
 typedef enum protocol {
 	pNull=0,pSync,pQuery, pResponse, pReady, pYes, pNo
 } protocol;

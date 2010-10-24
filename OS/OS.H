@@ -27,6 +27,8 @@ void osRun();
 
 void osPlayMode(state* current);
 void osRecordMode(state* current);
+void osPlayMode_();
+void osRecordMode_();
 
 #define MASTER
 //#define SLAVE

@@ -42,7 +42,7 @@ int osInitialize() {
 void osRun() {
 //	kpTest();
 //	acdTest();
-//	uartTest();
+	uartTest();
 //	soundCheck();
 //	mpTest();//No more network.
 	acdWarmUpAD();
@@ -66,7 +66,8 @@ void osRun() {
 		current=sIdle;
 //		acdStartPlaying();
 		while(kpLastChar=='1') {
-			osPlayMode(&current);
+//			osPlayMode(&current);
+			osPlayMode_();
 		}
 //		U1STACLR = _U1STA_URXEN_MASK |//Disable Receiver
 //			_U1STA_OERR_MASK;//Clear Overflow
@@ -76,7 +77,8 @@ void osRun() {
 		LATESET = 0x01;//PORT E (-): Un-Indicate playing mode.
 		current=sIdle;
 		while(kpLastChar=='2') {
-			osRecordMode(&current);
+//			osRecordMode(&current);
+			osRecordMode_();
 		}
 		acdCommandWrite(
 				ACD_MODE_ADDRESS,
@@ -87,6 +89,49 @@ void osRun() {
 	}
 }
 
+void osPlayMode_() {
+		LATECLR = 0x01;//PORT E (-): Indicate playing mode.
+		LATESET = 0x08;//PORT E (-): Un-Indicate recording mode.
+		acdStartPlaying();
+		acdSendFileHeader(modifiedHeader);
+//		acdPlayFile(acdFileData,NUM_BLOCKS);
+		uint32_t data32;
+		while (1) {
+			((uint8_t*)(&data32))[0]=uartRXPollRead();
+			((uint8_t*)(&data32))[1]=uartRXPollRead();
+			((uint8_t*)(&data32))[2]=uartRXPollRead();
+			((uint8_t*)(&data32))[3]=uartRXPollRead();
+			acdDataTransfer(data32);
+		}
+}
+void osRecordMode_() {
+		LATECLR = 0x08;//PORT E (-): Indicate recording mode.
+		LATESET = 0x01;//PORT E (-): Un-Indicate playing mode.
+		acdStartRecording();
+//		acdReadFile(acdFileData);
+		uint32_t data32;
+		while (1) {
+			unsigned int ready;
+			uint16_t data;
+			do {
+				ready=acdCommandRead(ACD_HDAT1_ADDRESS);
+			} while (ready == 0);
+			data = acdCommandRead(ACD_HDAT0_ADDRESS);
+			(&data32)[3] = (uint8_t)(data>>8);
+			(&data32)[2] = (uint8_t)(data);
+
+			do {
+				ready=acdCommandRead(ACD_HDAT1_ADDRESS);
+			} while (ready == 0);
+			data = acdCommandRead(ACD_HDAT0_ADDRESS);
+			(&data32)[1] = (uint8_t)(data>>8);
+			(&data32)[0] = (uint8_t)(data);
+			uartTXPollWrite(((uint8_t*)(&data32))[0]);
+			uartTXPollWrite(((uint8_t*)(&data32))[1]);
+			uartTXPollWrite(((uint8_t*)(&data32))[2]);
+			uartTXPollWrite(((uint8_t*)(&data32))[3]);
+		}
+}
 void osPlayMode(state* current) {
 	static int syncTry;
 	static int iByte;
@@ -104,6 +149,8 @@ void osPlayMode(state* current) {
 		case sSyncing:
 			if (uartRXReady()) {
 				protocol piece=(protocol)uartRXRead();
+				++syncTry;
+//				if (syncTry>5) *current=sIdle;
 				if (uartProcessSync(piece)) {
 					*current=sReceiving;
 					LATECLR = 0x04;//PORT E (-): Indicate sync.
@@ -142,10 +189,13 @@ void osRecordMode(state* current) {
 			acdReadFile(acdFileData);
 			uartQuery(pReady);
 			*current=sSyncing;
+			syncTry=0;
 			break;
 		case sSyncing:
 			if (uartRXReady()) {
 				protocol piece=(protocol)uartRXRead();
+				++syncTry;
+//				if (syncTry>5) *current=sIdle;
 				if (uartProcessResponse(piece)) {
 					*current=sSending;
 					uartSync();

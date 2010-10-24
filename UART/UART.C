@@ -41,22 +41,24 @@ void uartTest() {
 	uint8_t mask;
 	while(1) {
 #ifdef MASTER
-		LATECLR = 0x04;//PORT E (-): Indicate playing mode.
-		LATESET = 0x08;//PORT E (-): Un-Indicate recording mode.
-		uartTXPollWrite(0x04);
-		uartTXPollWrite(0x08);
-		for(i=0;i<0x400000;i++);
 		LATECLR = 0x08;//PORT E (-): Indicate playing mode.
-		LATESET = 0x04;//PORT E (-): Un-Indicate recording mode.
-		uartTXPollWrite(0x08);
-		uartTXPollWrite(0x04);
-		for(i=0;i<0x400000;i++);
+		LATESET = 0x01;//PORT E (-): Un-Indicate recording mode.
+		do {
+			uartQuery(pReady);
+		while(uartProcessResponse(uartRXPollRead()) != pYes);
+		LATECLR = 0x04;
+		for(i=0;i>0x80000000;++i);
+		uartSync();
+		LATESET = 0x04;
 #endif
-#ifdef SLAVE
-		mask = uartRXPollRead();
-		LATECLR = mask;
-		mask = uartRXPollRead();
-		LATESET = mask;
+#ifndef MASTER
+		LATECLR = 0x01;//PORT E (-): Indicate playing mode.
+		LATESET = 0x08;//PORT E (-): Un-Indicate recording mode.
+		while(uartProcessQuery(uartRXPollRead()) != pReady);
+		uartRespond(pYes);
+		LATECLR = 0x04;
+		while(!uartProcessSync(uartRXPollRead()));
+		LATESET = 0x04;
 #endif
 	}
 }
