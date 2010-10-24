@@ -6,8 +6,6 @@
 //#include "../LCD/LCD.h"
 //#include "../KP/KeyPad.H"
 //#include "../ACD/AudioCoDec.H"
-//#define MASTER
-//#define SLAVE
 
 int uartInitialize() {
 	TRISDSET = 0x4000;
@@ -27,95 +25,20 @@ int uartInitialize() {
 	U1BRG = (uint16_t)(((float)80000000/(float)(16*BAUD_RATE))-0.5);//Set Baud
 	U1STA = 0;//Clear status.
 	U1MODE = //UART1 mode(=): Set the mode for UART1.
-//		_U1MODE_RTSMD_MASK |	//Use simplex instead of flow control.
 		_U1MODE_UEN1_MASK;	//Use TX,RX,RTS,and CTS.
-	U1STASET = //Enable transmitter and receiver.
+	U1STASET = //Enable receiver.
 		_U1STA_UTXEN_MASK |	//Transmitter
 		_U1STA_URXEN_MASK;	//Receiver
+	IEC0SET = //Interrupt enable(+): Enable UART1 interrupts
+		_IEC0_U1EIE_MASK |	//Error interrupt
+		_IEC0_U1RXIE_MASK |	//Receive interrupt
+		_IEC0_U1TXIE_MASK;	//Transmit interrupt
 	U1MODE = //UART1 mode(=): Set the mode for UART1.
 		_U1MODE_ON_MASK;	//On
 	return 0;
 }
 void uartTest() {
-	int i=0;
-	uint8_t mask;
-	while(1) {
-#ifdef MASTER
-		LATECLR = 0x08;//PORT E (-): Indicate playing mode.
-		LATESET = 0x01;//PORT E (-): Un-Indicate recording mode.
-		do {
-			uartQuery(pReady);
-		while(uartProcessResponse(uartRXPollRead()) != pYes);
-		LATECLR = 0x04;
-		for(i=0;i>0x80000000;++i);
-		uartSync();
-		LATESET = 0x04;
-#endif
-#ifndef MASTER
-		LATECLR = 0x01;//PORT E (-): Indicate playing mode.
-		LATESET = 0x08;//PORT E (-): Un-Indicate recording mode.
-		while(uartProcessQuery(uartRXPollRead()) != pReady);
-		uartRespond(pYes);
-		LATECLR = 0x04;
-		while(!uartProcessSync(uartRXPollRead()));
-		LATESET = 0x04;
-#endif
-	}
 }
 void uartShutdown() {
 }
 
-void uartQuery(protocol piece) {
-	uartTXPollWrite((uint8_t)pQuery);
-	uartTXPollWrite((uint8_t)piece);
-}
-
-void uartRespond(protocol piece) {
-	uartTXPollWrite((uint8_t)pResponse);
-	uartTXPollWrite((uint8_t)piece);
-}
-void uartSync() {
-	uartTXPollWrite((uint8_t)pSync);
-}
-
-protocol uartProcessQuery(protocol piece) {
-	static protocol last=pNull;
-	protocol returnVal = pNull;
-	if (last==pQuery) returnVal=piece;
-	last=piece;
-	return returnVal;
-}
-
-protocol uartProcessResponse(protocol piece) {
-	static protocol last=pNull;
-	protocol returnVal = pNull;
-	if (last==pResponse) returnVal=piece;
-	last=piece;
-	return returnVal;
-}
-
-uint8_t uartProcessSync(protocol piece) {
-	return piece == pSync;
-}
-
-uint8_t uartTXFull() {
-	return(U1STA & _U1STA_UTXBF_MASK);
-}
-void uartTXWrite(uint8_t data) {
-	U1TXREG=data;
-}
-void uartTXPollWrite(uint8_t data) {
-	while(uartTXFull());
-	uartTXWrite(data);
-}
-
-uint8_t uartRXReady() {
-	return(U1STA & _U1STA_URXDA_MASK);
-}
-uint8_t uartRXRead() {
-	return(U1RXREG);
-}
-uint8_t uartRXPollRead() {
-	while(!uartRXReady());
-	return(uartRXRead());
-}

@@ -128,7 +128,7 @@ int kpInitialize() {
 	AD1PCFGSET = COL_PORT;//Set the COL pins for digital.
 //	CNPUESET = COL_CN;//Set the COL pins to have a weak pull up.
 	CNEN = COL_CN;//Enable the change notice for the COL pins.
-	IPC6CLR = _IPC4_T4IP_MASK | _IPC4_T4IS_MASK;//Clear interrupt priority.
+	IPC6CLR = _IPC6_CNIP_MASK | _IPC6_CNIS_MASK;//Clear interrupt priority.
 	IPC6SET =	//Set interrupt priority.
 		(5 << _IPC6_CNIP_POSITION) |
 		(2 << _IPC6_CNIS_POSITION);

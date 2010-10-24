@@ -4,8 +4,8 @@
 #include <sys/types.h>
 #include "../UART/UART.H"
 #include "../SPI/SPI.H"
-#include "../MP/MatchPort.H"
 #include "../LCD/LCD.h"
+#include "../IDC/IDC.H"
 #include "../KP/KeyPad.H"
 #include "../ACD/AudioCoDec.H"
 

@@ -1,22 +1,5 @@
 #include "OS.H"
 
-#define BUFFER_SIZE NUM_BLOCKS*128;
-uint8_t modifiedHeader[60];
-//uint8_t* acdFileBuffA = acdFileData;
-//uint8_t* acdFileBuffB = acdFileData+BUFFER_SIZE;
-#define MAIN_BUFFA_LOCK	0x1
-#define MAIN_BUFFB_LOCK	0x2
-#define INT_BUFFA_LOCK	0x4
-#define INT_BUFFB_LOCK	0x8
-//uint8_t lock=INT_BUFFA_LOCK;
-#pragma interrupt uartInterrupt ipl7 vector 24
-/*void uartInterrupt() {
-	static int iByte;
-	if (lock & INT_BUFFA_LOCK) {
-		if (!lock){}
-	} else {
-	}
-}*/
 /*	initialize
  *
  *	Initializes everything.  Returns 0 on success.  Returns an error code on
@@ -31,7 +14,6 @@ int osInitialize() {
 	if (!failCode) failCode=acdInitialize();
 	if (!failCode) failCode=uartInitialize();
 	if (!failCode) failCode=kpInitialize();
-//	if (!failCode) failCode=mpInitialize();//No more network.
 	return failCode;//Return no error.
 }
 
@@ -44,8 +26,59 @@ void osRun() {
 //	acdTest();
 	uartTest();
 //	soundCheck();
+	idcInitializeConnection();
+	uint8_t running=1;
+	char prev='\0';
+	while(running) {
+		while(kpLastChar==prev);
+		prev=kpLastChar;
+		switch(kpLastChar) {
+			case'\0':
+				break;
+			case '0':
+				break;
+			case '1':
+				break;
+			case '2':
+				break;
+			case '3':
+				break;
+			case '4':
+				break;
+			case '5':
+				break;
+			case '6':
+				break;
+			case '7':
+				break;
+			case '8':
+				break;
+			case '9':
+				break;
+			case 'A':
+				if (connection.status!=csConnected) {
+					idcOpenConnection();
+				}
+				break;
+			case 'B':
+				if (connection.status==csConnected) {
+					idcCloseConnection();
+				}
+				break;
+			case 'C':
+				break;
+			case 'D':
+				running=0;
+				idcCloseConnection();
+				break;
+			case 'E':
+				break;
+			case 'F':
+				break;
+		}
+	}
 //	mpTest();//No more network.
-	acdWarmUpAD();
+/*	acdWarmUpAD();
 	state current=sIdle;
 	char meh;
 	unsigned int iWord;
@@ -86,11 +119,11 @@ void osRun() {
 				ACD_MODE_RESET_MASK
 		);
 		acdWarmUpAD();
-	}
+	}/**/
 }
 
 void osPlayMode_() {
-		LATECLR = 0x01;//PORT E (-): Indicate playing mode.
+/*		LATECLR = 0x01;//PORT E (-): Indicate playing mode.
 		LATESET = 0x08;//PORT E (-): Un-Indicate recording mode.
 		acdStartPlaying();
 		acdSendFileHeader(modifiedHeader);
@@ -103,9 +136,10 @@ void osPlayMode_() {
 			((uint8_t*)(&data32))[3]=uartRXPollRead();
 			acdDataTransfer(data32);
 		}
+		/**/
 }
 void osRecordMode_() {
-		LATECLR = 0x08;//PORT E (-): Indicate recording mode.
+/*		LATECLR = 0x08;//PORT E (-): Indicate recording mode.
 		LATESET = 0x01;//PORT E (-): Un-Indicate playing mode.
 		acdStartRecording();
 //		acdReadFile(acdFileData);
@@ -131,9 +165,10 @@ void osRecordMode_() {
 			uartTXPollWrite(((uint8_t*)(&data32))[2]);
 			uartTXPollWrite(((uint8_t*)(&data32))[3]);
 		}
+		/**/
 }
 void osPlayMode(state* current) {
-	static int syncTry;
+/*	static int syncTry;
 	static int iByte;
 	switch(*current) {
 		case sIdle:
@@ -175,10 +210,10 @@ void osPlayMode(state* current) {
 			break;
 		default:*current=sIdle;
 	}
-}
+/**/}
 
 void osRecordMode(state* current) {
-	static int syncTry;
+/*	static int syncTry;
 	static int iByte;
 	switch(*current) {
 		case sIdle:
@@ -216,7 +251,7 @@ void osRecordMode(state* current) {
 			break;
 		default:*current=sIdle;
 	}
-}
+/**/}
 
 /*	soundCheck
  *
@@ -224,7 +259,7 @@ void osRecordMode(state* current) {
  *	device to a slave device.
  */
 void soundCheck() {
-	int i=0;
+/*	int i=0;
 #ifdef MASTER
 	acdStartRecording();
 	while(1) {
@@ -316,7 +351,7 @@ void soundCheck() {
 		acdPlayFile(acdFileData,NUM_BLOCKS);
 	}
 #endif
-}
+/**/}
 
 /*	shutdown
  *
@@ -326,6 +361,8 @@ void soundCheck() {
 void osShutdown() {
 	acdShutdown();
 	uartShutdown();
-	mpShutdown();
+	kpShutdown();
+	LATESET=0xF;//Turn off all the LEDs.
+	LATECLR=0x2;//Turn on the red LED.
 }
 
