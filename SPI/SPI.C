@@ -5,18 +5,16 @@
  *	Initializes SPI1 to be used for communication with the ACD.
  */
 int spiInitSPI1() {
-/*
-	The following code example will initialize the SPI1 in Slave mode.
-	It assumes that none of the SPI1 input pins are shared with an analog
-	input. If so, the AD1PCFG and corresponding TRIS registers have to be
-	properly configured.
-*/
 	uint32_t trash;
 //	TRISDSET=0x0200;//Tris D(+):Set Frame Sync to an input.
 	IEC0CLR = 			//Interrupt Enable(-)
 		_IEC0_SPI1EIE_MASK |	//Error interrupt
 		_IEC0_SPI1TXIE_MASK |	//Transmit interrupt
 		_IEC0_SPI1RXIE_MASK;	//Recieve interrupt
+	IFS0CLR = 			//Interrupt Flags(-)
+		_IFS0_SPI1EIF_MASK |	//Error interrupt
+		_IFS0_SPI1TXIF_MASK |	//Transmit interrupt
+		_IFS0_SPI1RXIF_MASK;	//Recieve interrupt
 	SPI1CON=0;//SPI1 Config(=): Stops and resets the SPI1.
 	trash=SPI1BUF;//Clears the receive buffer
 	IFS0CLR =			//Interrupt Flags(-)
@@ -26,9 +24,9 @@ int spiInitSPI1() {
 	IPC5CLR =			//Interrupt Priority Control(-).
 		_IPC5_SPI1IP_MASK |	//Clear interrupt priority.
 		_IPC5_SPI1IS_MASK;	//Clear interrupt sub-priority.
-//	IPC5SET =				//Interrupt Priority Control(+).
-//		(7 << _IPC5_SPI1IP_POSITION) |	//Set to priority 7.
-//		(3 << _IPC5_SPI1IP_POSITION);	//Set to sub-priority 3.
+	IPC5SET =				//Interrupt Priority Control(+).
+		(7 << _IPC5_SPI1IP_POSITION) |	//Set to priority 7.
+		(2 << _IPC5_SPI1IP_POSITION);	//Set to sub-priority 2.
 	SPI1STATCLR=_SPI1STAT_SPIROV_MASK;//SPI1 Status(-): Clear recieve overflow.
 	//SPI1 Baud Rate Generator(=): Set the divider to 1/46th the clock
 	//frequency.
@@ -37,9 +35,9 @@ int spiInitSPI1() {
 		_SPI1CON_MODE32_MASK |	//32 Bit mode
 		_SPI1CON_CKE_MASK |	//Set the clock edge to rising edge.
 		_SPI1CON_MSTEN_MASK;	//Master mode
-//	IEC0SET = 			//Interrupt Enable(+)
-//		_IEC0_SPI1EIE_MASK |	//Error interrupt
-//		_IEC0_SPI1RXIE_MASK;	//Recieve interrupt
+	IEC0SET = 			//Interrupt Enable(+)
+		_IEC0_SPI1EIE_MASK |	//Error interrupt
+		_IEC0_SPI1RXIE_MASK;	//Recieve interrupt
 	SPI1CONSET= _SPI1CON_ON_MASK; //SPI1 Config(+): Turn it on.
 	// from now on, the device is ready to receive and transmit data
 	

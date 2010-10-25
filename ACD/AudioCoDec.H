@@ -1,9 +1,5 @@
 #ifndef ACD_H
 #define ACD_H
-/*	A note about the ACD.  It interperets values as raw voltage scales in
- *	a 2's compliment system with 0x7FFF being full positive and 0x8000
- *	being full scale negative.
- */
 
 //#define VS1053B
 #define VS1033D
@@ -23,8 +19,8 @@ inline int acdGetDREQ();
 inline void acdPollDREQ();
 
 void acdCommandWrite(uint8_t address, uint16_t value);
-uint16_t acdCommandRead(uint8_t address);
-uint32_t acdDataTransfer(uint32_t data);
+void acdCommandRead(uint8_t address, uint16_t* value);
+void acdDataTransfer(uint32_t* dataOut,uint32_t* dataIn,unsigned int count);
 void acdBasicTests();
 void acdSineTest(uint8_t n);
 void acdSineTest2(uint16_t left, uint16_t right);

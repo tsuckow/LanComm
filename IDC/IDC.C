@@ -20,9 +20,6 @@ void uartInterrupt() {
 		if (U1STA & _U1STA_FERR_MASK) {
 			LATECLR = 0x8;//Turn on Green LED.
 		}
-		if (U1STA & _U1STA_PERR_MASK) {
-			LATECLR = 0xC;//Turn on Green and White LEDs.
-		}
 		LATECLR = 0x3;//Turn on the Red ond Orange LEDs, turn off ACD.
 		while(1);//Spin, we're done.
 		IFS0CLR = //Interrupt flags(-): Clear UART1 interrupts
