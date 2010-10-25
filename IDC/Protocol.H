@@ -6,9 +6,9 @@ typedef enum ProtocolBytes {
 	pbDisconnect=		0x04,
 	pbRequestConnect=	0x05,
 	pbConfirmConnect=	0x06,
-	pbStopPlaying=		0x08,
-	pbRequestPlaying=	0x09,
-	pbConfirmPlaying=	0x0A
+	pbStopByteArray=	0x08,
+	pbRequestByteArray=	0x09,
+	pbConfirmByteArray=	0x0A
 } ProtocolBytes;
 
 typedef enum DeviceMode {

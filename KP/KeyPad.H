@@ -21,4 +21,5 @@ void kpShutdown();
 
 extern volatile char kpChar;
 extern volatile char kpLastChar;
+extern volatile uint8_t kpNewChar;
 #endif

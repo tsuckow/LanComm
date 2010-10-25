@@ -1,5 +1,9 @@
 #ifndef ACD_H
 #define ACD_H
+/*	A note about the ACD.  It interperets values as raw voltage scales in
+ *	a 2's compliment system with 0x7FFF being full positive and 0x8000
+ *	being full scale negative.
+ */
 
 //#define VS1053B
 #define VS1033D
@@ -19,8 +23,8 @@ inline int acdGetDREQ();
 inline void acdPollDREQ();
 
 void acdCommandWrite(uint8_t address, uint16_t value);
-void acdCommandRead(uint8_t address, uint16_t* value);
-void acdDataTransfer(uint32_t* dataOut,uint32_t* dataIn,unsigned int count);
+uint16_t acdCommandRead(uint8_t address);
+uint32_t acdDataTransfer(uint32_t data);
 void acdBasicTests();
 void acdSineTest(uint8_t n);
 void acdSineTest2(uint16_t left, uint16_t right);
@@ -47,8 +51,7 @@ void acdInitFile(
 	uint32_t sampleFrequency
 );
 
-extern uint8_t* acdFileHeader;
-extern uint8_t* acdFileData;
+//extern uint8_t* acdFileBuffer;
 void acdBuildFileHeader(uint8_t* header, int n, uint16_t C,uint32_t Fs);
 void acdModifyHeader(uint8_t* original,uint8_t* modified);
 void acdReadFile(acdFile* file);
@@ -59,7 +62,7 @@ void acdPlayFile(acdFile* file);
 #define PORTE_ACDDREQ_MASK		0x0200
 #define PORTD_ACDXCS_MASK		0x0200
 #define PORTD_ACDXDCS_MASK		0x0100
-#define NUM_BLOCKS			  0x20
+//#define NUM_BLOCKS			  0x20
 #define NUM_CHANNELS			  0x01
 #define SAMPLE_FREQUENCY		  8000U
 #define SAMPLE_DIVIDER			     6U

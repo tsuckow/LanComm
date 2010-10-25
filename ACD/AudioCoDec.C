@@ -2,52 +2,11 @@
 //#define VS1053B
 //#define VS1033D
 
-//This file will contain a header and audio blocks.
-uint8_t acdFileBuf[NUM_BLOCKS*256 + 60];
-
-typedef enum state {
-	sError,sIdle,sCommandWrite,sCommandRead,sDataTransfer
-} state;
-
-state cState = sIdle;
-uint32_t* intDataOut=0;
-uint32_t* intDataIn=0;
-unsigned int cCount=0;
-unsigned int cIndex=0;
-
-#pragma interrupt spiInterrupt ipl7 vector 23
-void spiInterrupt() {
-	uint32_t trash;
-	if (IFS0 & _IFS0_SPI1EIF_MASK) {	//Error interrupt
-		cState = sError;
-		LATESET = 0xF;//Turn off all the LEDs.
-		if (SPI1STAT & _SPI1STAT_SPIROV_MASK) {
-			LATECLR = 0x4;//Turn on White LED.
-		}
-		if (SPI1STAT & _SPI1STAT_SPITUR_MASK) {
-			LATECLR = 0x8;//Turn on Green LED.
-		}
-		LATECLR = 0x3;//Turn on the Red ond Orange LEDs, turn off ACD.
-		while(1);//Spin, we're done.
-		IFS0CLR = //Interrupt flags(-): Clear SPI1 interrupts
-			_IFS0_SPI1EIF_MASK;	//Error interrupt
-	} else if (IFS0 & _IFS0_SPI1RXIF_MASK) {//Receive interrupt
-		IFS0CLR = //Interrupt flags(-): Clear SPI1 interrupts
-			_IFS0_SPI1RXIF_MASK;	//Error interrupt
-		trash = SPI1BUF;
-		switch(cState) {
-			case sCommandRead:
-			break;
-			case sDataTransfer:
-			break;
-		}
-	} else if (IFS0 & _IFS0_SPI1TXIF_MASK) {	//Transmit interrupt
-		IFS0CLR = //Interrupt flags(-): Clear SPI1 interrupts
-			_IFS0_SPI1TXIF_MASK;	//Error interrupt
-		switch(cState) {
-		}
-	}
-}
+//This file will conain a header and 32 audio blocks.
+//uint8_t acdFileBuf[NUM_BLOCKS*256 + 60];
+//uint8_t* acdFileBuffer=acdFileBuf;
+//uint8_t* acdFileHeader = acdFileBuf;
+//uint8_t* acdFileData = acdFileBuf+60;
 
 int acdInitialize() {
 	int failCode;
@@ -114,8 +73,6 @@ void acdPollDREQ() {
 }
 
 void acdCommandWrite(uint8_t address, uint16_t value) {
-}
-void acdCommandWrite(uint8_t address, uint16_t value) {
 	int count;
 	acdPollDREQ();
 	LATDCLR = PORTD_ACDXCS_MASK;//PORT D (+): Activate command chip select.
@@ -128,9 +85,7 @@ void acdCommandWrite(uint8_t address, uint16_t value) {
 	LATDSET = PORTD_ACDXCS_MASK;//PORT D (-): Deactivate command chip select.
 	for (count=0;count<0xF;++count);
 }
-void acdCommandRead(uint8_t address, uint16_t* value) {
-}
-uint16_t acdCommandRead_(uint8_t address) {
+uint16_t acdCommandRead(uint8_t address) {
 	int count;
 	acdPollDREQ();
 	LATDCLR = PORTD_ACDXCS_MASK;//PORT D (+): Activate command chip select.
@@ -286,7 +241,7 @@ void acdStartRecording() {
 	);
 	acdCommandWrite(
 			ACD_AICTRL2_ADDRESS,
-			0x0400			//Set maximum autogain to 1x.
+			0x0900			//Set maximum autogain to 1x.
 	);
 	acdCommandWrite(
 			ACD_AICTRL3_ADDRESS,
@@ -404,7 +359,7 @@ void acdModifyHeader(uint8_t* original,uint8_t* modified) {
 	}
 }
 void acdFileTests() {
-	acdFile file;
+/*	acdFile file;
 	acdWarmUpAD();
 
 	acdInitFile(
@@ -432,5 +387,6 @@ void acdFileTests() {
 		acdPlayFile(&file);
 		LATESET = 0x01;//PORT E (-): Un-Indicate playing mode.
 	}
+	*/
 }
 

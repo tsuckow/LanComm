@@ -6,6 +6,7 @@
 
 volatile char kpChar='\0';
 volatile char kpLastChar='\0';
+volatile uint8_t kpNewChar=0;
 volatile uint8_t row=0;
 int rows[] = {0x1,0x2,0x4,0x8};
 volatile uint8_t colPins;
@@ -20,7 +21,10 @@ void kpPinChangeInterrupt() {
 
 void kpTimeoutInterrupt() {
 	IFS0CLR = _IFS0_T3IF_MASK;//Interrupt Flags (-): Clear timer 23 flags.
-	if (kpChar != '\0') kpLastChar = kpChar;
+	if (kpChar != '\0') {
+		kpLastChar = kpChar;
+		kpNewChar = 1;
+	}
 	uint8_t col=0xF0;
 	if (!(colPins & COL1_PORT)) {
 		col=0x0;

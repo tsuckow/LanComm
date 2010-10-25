@@ -27,6 +27,7 @@ int uartInitialize() {
 	U1MODE = //UART1 mode(=): Set the mode for UART1.
 		_U1MODE_UEN1_MASK;	//Use TX,RX,RTS,and CTS.
 	U1STASET = //Enable receiver.
+		_U1STA_UTXISEL1_MASK |	//Transmitter
 		_U1STA_UTXEN_MASK |	//Transmitter
 		_U1STA_URXEN_MASK;	//Receiver
 	IEC0SET = //Interrupt enable(+): Enable UART1 interrupts

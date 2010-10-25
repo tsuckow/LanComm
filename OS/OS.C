@@ -22,15 +22,89 @@ int osInitialize() {
  *	This function will run until the device is ready to be shut down.
  */
 void osRun() {
+	acdFile fileA,fileB;
+	uint8_t buffB=0;
+	static state cState=sIdle;
 //	kpTest();
-	acdTest();
+//	acdTest();
 //	uartTest();
 //	soundCheck();
 	idcInitializeConnection();
+	acdInitFile(
+		&fileA,
+		idcArrayBuffA,
+		NUM_BLOCKS,
+		NUM_CHANNELS,
+		SAMPLE_FREQUENCY
+	);
+	acdInitFile(
+		&fileB,
+		idcArrayBuffB,
+		NUM_BLOCKS,
+		NUM_CHANNELS,
+		SAMPLE_FREQUENCY
+	);
 	uint8_t running=1;
 	while(running) {
-		while(kpChar=='\0');
-		while(kpChar!='\0');
+		while(! kpNewChar) {
+			if (connection.role==crMaster) {
+				if (cState!=sRecording) {
+					acdStartRecording();
+					cState=sRecording;
+				}
+				if (buffB) {
+					if (currIdcStatus!=isSendingArray) {
+						LATECLR = 0x8;//Turn on green LED.
+						acdReadFile(&fileB);
+						LATESET = 0x8;//Turn off green LED.
+						idcSendByteArray(
+							fileB.buf,fileB.size
+						);
+					}
+					buffB=0;
+				} else {
+					if (currIdcStatus!=isSendingArray) {
+						LATECLR = 0x8;//Turn on green LED.
+						acdReadFile(&fileA);
+						LATESET = 0x8;//Turn off green LED.
+						idcSendByteArray(
+							fileA.buf,fileA.size
+						);
+					}
+					buffB=1;
+				}
+			} else if (connection.role==crSlave) {
+				if (cState!=sPlaying) {
+					acdStartPlaying();
+					cState=sPlaying;
+				}
+				if (idcArrayBuffASize) {
+					LATECLR = 0x1;//Turn on orange LED.
+					acdPlayFile(&fileA);
+					LATESET = 0x1;//Turn off orange LED.
+					idcArrayBuffASize=0;
+				}
+				if (idcArrayBuffBSize) {
+					LATECLR = 0x1;//Turn on orange LED.
+					acdPlayFile(&fileB);
+					LATESET = 0x1;//Turn off orange LED.
+					idcArrayBuffBSize=0;
+				}
+			} else {
+				if (cState!=sIdle) {
+					acdCommandWrite(
+							ACD_MODE_ADDRESS,
+							ACD_MODE_DEFAULT_MASK |
+							ACD_MODE_RESET_MASK
+					);
+					acdWarmUpAD();
+					cState=sIdle;
+					//Turn off green and orange LEDs.
+					LATESET = 0x9;
+				}
+			}
+		}
+		kpNewChar=0;
 		switch(kpLastChar) {
 			case'\0':
 				break;
@@ -56,11 +130,13 @@ void osRun() {
 				break;
 			case 'A':
 				if (connection.status!=csConnected) {
+					while(currIdcStatus);
 					idcOpenConnection();
 				}
 				break;
 			case 'B':
 				if (connection.status==csConnected) {
+					while(currIdcStatus);
 					idcCloseConnection();
 				}
 				break;
