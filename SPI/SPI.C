@@ -1,43 +1,5 @@
 #include "SPI.H"
 
-/*	initClockBus
- *	-- DEPRICATED -- This function is no longer relevent.
- *	Initializes SPI2 in  framed master mode so it constantly clocks.  We
- *	will use this clock pin as the clock bus for out peripherals.
- */
-int spiInitClockBus() {
-/*
-	The following code example will initialize the SPI2 in Master mode.
-	It assumes that none of the SPI2 input pins are shared with an analog
-	input. If so, the AD1PCFG and corresponding TRIS registers have to be
-	properly configured.
-*/
-/*	uint16_t trash;//A trash value so we can read from the register.
-	IEC1CLR =			//Interrupt Enable(-)
-		_IEC1_SPI2EIE_MASK |	//Error interrupt
-		_IEC1_SPI2TXIE_MASK |	//Transmit interrupt
-		_IEC1_SPI2RXIE_MASK;	//Recieve interrupt
-	SPI2CON = 0;//SPI2 Config(=): Stops and resets the SPI1.
-	trash=SPI2BUF;// clears the receive buffer
-	IFS1CLR =			//Interrupt Flags(-)
-		_IFS1_SPI2EIF_MASK |	//Error interrupt
-		_IFS1_SPI2TXIF_MASK |	//Transmit interrupt
-		_IFS1_SPI2RXIF_MASK;	//Recieve interrupt
-	//SPI2 Baud Rate Generator(=): Set the divider to determine the clock
-	//frequency.
-	SPI2BRG=CLK_DIV;
-	SPI2STATCLR=_SPI2STAT_SPIROV_MASK;//SPI2 Status(-): Clear recieve overflow.
-	SPI2CONSET=			//SPI2 Config(+)
-		_SPI2CON_FRMEN_MASK |	//Frame enable
-		_SPI2CON_FRMPOL_MASK |	//Frame polarity
-		_SPI2CON_MODE16_MASK |	//16 Bit mode
-		_SPI2CON_SSEN_MASK |	//Slave Select enable
-		_SPI2CON_MSTEN_MASK;	//Master mode.
-	SPI2CONSET= _SPI2CON_ON_MASK; //SPI2 Config(+): Turn it on.
-	// from now on, the device is ready to transmit and receive data
-*/	return 0;//Return no error.
-}
-
 /*	initSPI1
  *
  *	Initializes SPI1 to be used for communication with the ACD.

@@ -10,6 +10,7 @@
 
 #include <p32xxxx.h>
 #include "../SPI/SPI.H"
+#include "../IDC/IDC.H"
 
 int acdInitialize();
 int acdInitInterface();
@@ -29,20 +30,34 @@ void acdSineTest(uint8_t n);
 void acdSineTest2(uint16_t left, uint16_t right);
 void acdSCITest(uint8_t n);
 
+void acdWarmUpAD();
 void acdApplyPCMPatch();
 void acdStartRecording();
-void acdWarmUpAD();
+void acdStartPlaying();
+void acdFileTests();
+
+typedef struct acdFile {
+	uint8_t* buf;
+	uint8_t* header;
+	uint8_t* data;
+	uint32_t size;
+	uint32_t numBlocks;
+} acdFile;
+void acdInitFile(
+	acdFile* file,
+	uint8_t* buf,
+	uint32_t numBlocks,
+	uint16_t numChannels,
+	uint32_t sampleFrequency
+);
+
 extern uint8_t* acdFileHeader;
 extern uint8_t* acdFileData;
 void acdBuildFileHeader(uint8_t* header, int n, uint16_t C,uint32_t Fs);
 void acdModifyHeader(uint8_t* original,uint8_t* modified);
-void acdReadFile(uint8_t* fileStart);
+void acdReadFile(acdFile* file);
 uint32_t acdReadAudio();
-void acdStartPlaying();
-void acdSendFileHeader(uint8_t* header);
-void acdPlayFile(uint8_t* data,unsigned int blocks);
-void acdPlayFile_(uint8_t* file,unsigned int bytes);
-void acdFileTests();
+void acdPlayFile(acdFile* file);
 
 #define PORTE_ACDRESET_MASK		0x0002
 #define PORTE_ACDDREQ_MASK		0x0200

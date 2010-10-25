@@ -10,11 +10,11 @@ int osInitialize() {
 	TRISECLR = 0xF;//TRIS E(-): Configure the 4 LEDs for output.
 	ODCECLR = 0xF;//ODC E(-): Congifure the 4 LEDs for non-open drain.
 	int failCode;
-	failCode=spiInitClockBus();
+	failCode=0;
 	if (!failCode) failCode=acdInitialize();
 	if (!failCode) failCode=uartInitialize();
 	if (!failCode) failCode=kpInitialize();
-	return failCode;//Return no error.
+	return failCode;//Return error code.
 }
 
 /*	run
@@ -23,15 +23,14 @@ int osInitialize() {
  */
 void osRun() {
 //	kpTest();
-//	acdTest();
-	uartTest();
+	acdTest();
+//	uartTest();
 //	soundCheck();
 	idcInitializeConnection();
 	uint8_t running=1;
-	char prev='\0';
 	while(running) {
-		while(kpLastChar==prev);
-		prev=kpLastChar;
+		while(kpChar=='\0');
+		while(kpChar!='\0');
 		switch(kpLastChar) {
 			case'\0':
 				break;
